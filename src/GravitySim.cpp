@@ -7,20 +7,20 @@ float SW = 800.0f;
 float SH = 600.0f;
 
 GLFWwindow* StartGLFW();
-void DrawCircle(float centerX, float centerY, float radius, int points);
+void DrawCircle(float CX, float CY, float rad, int points);
 
 int main() {
 
     GLFWwindow* window = StartGLFW();
 
 
-    float centerX = SW / 2.0f;
-    float centerY = SH / 2.0f;
-    float radius = 50.0f;
+    float CX = SW / 2.0f;
+    float CY = SH / 2.0f;
+    float rad = 50.0f;
     int points = 50;
 
     std::vector<float> pos = {400.0f, 600.0f};
-    std::vector<float> velocity = {0.0f, 0.0f};
+    std::vector<float> velo = {0.0f, 0.0f};
     
     double previousTime = glfwGetTime();
 
@@ -31,24 +31,24 @@ int main() {
 
         glClear(GL_COLOR_BUFFER_BIT);
 
-        DrawCircle(pos[0], pos[1], radius, points);
+        DrawCircle(pos[0], pos[1], rad, points);
 
    
-        pos[0] += velocity[0] * deltaTime;
-        pos[1] += velocity[1] * deltaTime;
-        velocity[1] += -9.81 * deltaTime;
+        pos[0] += velo[0] * deltaTime;
+        pos[1] += velo[1] * deltaTime;
+        velo[1] += -9.81 * deltaTime;
 
   
-        if (pos[1] - radius <= 0.0f || pos[1] + radius >= SH) {
-            velocity[1] = -velocity[1] * 0.8f;
+        if (pos[1] - rad <= 0.0f || pos[1] + rad >= SH) {
+            velo[1] = -velo[1] * 0.8f;
         }
-        if (pos[0] - radius <= 0.0f || pos[0] + radius >= SW) {
-            velocity[0] = -velocity[0] * 0.8f;
+        if (pos[0] - rad <= 0.0f || pos[0] + rad >= SW) {
+            velo[0] = -velo[0] * 0.8f;
         }
-        if (pos[1] - radius < 0.0f) pos[1] = radius;
-        if (pos[1] + radius > SH) pos[1] = SH - radius;
-        if (pos[0] - radius < 0.0f) pos[0] = radius;
-        if (pos[0] + radius > SW) pos[0] = SW - radius;
+        if (pos[1] - rad < 0.0f) pos[1] = rad;
+        if (pos[1] + rad > SH) pos[1] = SH - rad;
+        if (pos[0] - rad < 0.0f) pos[0] = rad;
+        if (pos[0] + rad > SW) pos[0] = SW - rad;
 
 
         glfwSwapBuffers(window);
@@ -80,15 +80,15 @@ GLFWwindow* StartGLFW(){
     return window;
 }
 
-void DrawCircle(float centerX, float centerY, float radius, int points){
+void DrawCircle(float CX, float CY, float rad, int points){
     
         glBegin(GL_TRIANGLE_FAN);
-        glVertex2d(centerX, centerY);
+        glVertex2d(CX, CY);
 
         for (int i = 0; i <= points; i++) {
             float angle = 2.0f * 3.14159265359 * (static_cast<float>(i) / points);
-            float x = centerX + std::cos(angle) * radius;
-            float y = centerY + std::sin(angle) * radius;
+            float x = CX + std::cos(angle) * rad;
+            float y = CY + std::sin(angle) * rad;
             glVertex2d(x, y);
         }
         
