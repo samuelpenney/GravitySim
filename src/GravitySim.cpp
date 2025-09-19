@@ -13,16 +13,44 @@ int main() {
 
     GLFWwindow* window = StartGLFW();
 
-    float centerX = 0.0f;
-    float centerY = 0.0f;
-    float radius = 0.1f;
-    int points = 100;
+
+    float centerX = SW / 2.0f;
+    float centerY = SH / 2.0f;
+    float radius = 50.0f;
+    int points = 50;
+
+    std::vector<float> pos = {400.0f, 600.0f};
+    std::vector<float> velocity = {0.0f, 0.0f};
     
-    while(!glfwWindowShouldClose(window)){
+    double previousTime = glfwGetTime();
+
+    while (!glfwWindowShouldClose(window)) {
+        double currentTime = glfwGetTime();
+        double deltaTime = (currentTime - previousTime) * 5.0; // *5 is there to speed up the simulation
+        previousTime = currentTime;
+
         glClear(GL_COLOR_BUFFER_BIT);
 
-        DrawCircle(centerX, centerY, radius, points);
-        
+        DrawCircle(pos[0], pos[1], radius, points);
+
+   
+        pos[0] += velocity[0] * deltaTime;
+        pos[1] += velocity[1] * deltaTime;
+        velocity[1] += -9.81 * deltaTime;
+
+  
+        if (pos[1] - radius <= 0.0f || pos[1] + radius >= SH) {
+            velocity[1] = -velocity[1] * 0.8f;
+        }
+        if (pos[0] - radius <= 0.0f || pos[0] + radius >= SW) {
+            velocity[0] = -velocity[0] * 0.8f;
+        }
+        if (pos[1] - radius < 0.0f) pos[1] = radius;
+        if (pos[1] + radius > SH) pos[1] = SH - radius;
+        if (pos[0] - radius < 0.0f) pos[0] = radius;
+        if (pos[0] + radius > SW) pos[0] = SW - radius;
+
+
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
@@ -45,12 +73,7 @@ GLFWwindow* StartGLFW(){
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    float aspect = SW / SH;
-    if (aspect >= 1.0f) {
-        glOrtho(-aspect, aspect, -1.0, 1.0, -1.0, 1.0);
-    } else {
-        glOrtho(-1.0, 1.0, -1.0 / aspect, 1.0 / aspect, -1.0, 1.0);
-    }
+    glOrtho(0.0, SW, 0.0, SH, -1.0, 1.0);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
