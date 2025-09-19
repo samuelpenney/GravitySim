@@ -7,7 +7,7 @@ float SW = 800.0f;
 float SH = 600.0f;
 
 GLFWwindow* StartGLFW();
-void DrawCircle(float centerX, float centerY, float radius, int res);
+void DrawCircle(float centerX, float centerY, float radius, int points);
 
 int main() {
 
@@ -21,17 +21,7 @@ int main() {
     while(!glfwWindowShouldClose(window)){
         glClear(GL_COLOR_BUFFER_BIT);
 
-        glBegin(GL_TRIANGLE_FAN);
-        glVertex2d(centerX, centerY);
-
-        for (int i = 0; i <= points; i++) {
-            float angle = 2.0f * 3.14159265359 * (static_cast<float>(i) / points);
-            float x = centerX + std::cos(angle) * radius;
-            float y = centerY + std::sin(angle) * radius;
-            glVertex2d(x, y);
-        }
-        
-        glEnd();
+        DrawCircle(centerX, centerY, radius, points);
         
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -67,6 +57,17 @@ GLFWwindow* StartGLFW(){
     return window;
 }
 
-void DrawCircle(float centerX, float centerY, float radius, int res){
+void DrawCircle(float centerX, float centerY, float radius, int points){
+    
+        glBegin(GL_TRIANGLE_FAN);
+        glVertex2d(centerX, centerY);
 
+        for (int i = 0; i <= points; i++) {
+            float angle = 2.0f * 3.14159265359 * (static_cast<float>(i) / points);
+            float x = centerX + std::cos(angle) * radius;
+            float y = centerY + std::sin(angle) * radius;
+            glVertex2d(x, y);
+        }
+        
+        glEnd();
 }
