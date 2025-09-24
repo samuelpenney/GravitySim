@@ -3,8 +3,8 @@
 #include <vector>
 #include <cmath>
 
-float SW = 800.0f; // Screen Width
-float SH = 600.0f; // Screen Height
+float SW = 1600.0f; // Screen Width
+float SH = 900.0f; // Screen Height
 //double GravConst = 6.674e-11;
 double GravConst = 6.674e-3; // Was to small to actual change the planets visually
 
@@ -27,18 +27,18 @@ int main() {
     GLFWwindow* window = StartGLFW();
 
     Object Planet1;
-    Planet1.radius = 50.0;
-    Planet1.mass = 1e6;
-    Planet1.position[0] = 200.0;
-    Planet1.position[1] = 600.0;
+    Planet1.radius = 15.0;
+    Planet1.mass = 3e6;
+    Planet1.position[0] = 1000.0;
+    Planet1.position[1] = 100.0;
     Planet1.velocity[0] = 0.0;
-    Planet1.velocity[1] = 0.0;
+    Planet1.velocity[1] = 10.0;
 
     Object Planet2;
-    Planet2.radius = 50.0;
+    Planet2.radius = 25.0;
     Planet2.mass = 5e6;
-    Planet2.position[0] = 600.0;
-    Planet2.position[1] = 100.0;
+    Planet2.position[0] = 800.0;
+    Planet2.position[1] = 50.0;
     Planet2.velocity[0] = 0.0;
     Planet2.velocity[1] = 0.0;
 
@@ -55,7 +55,7 @@ int main() {
 
     while (!glfwWindowShouldClose(window)) {
         double currentTime = glfwGetTime();
-        double deltaTime = (currentTime - previousTime) * 5.0; // *5 is there to speed up the simulation
+        double deltaTime = (currentTime - previousTime) * 10.0; // *5 is there to speed up the simulation
         previousTime = currentTime;
 
         glClear(GL_COLOR_BUFFER_BIT);
@@ -108,14 +108,14 @@ GLFWwindow* StartGLFW(){
         exit(EXIT_FAILURE);
     }
 
-    GLFWwindow* window = glfwCreateWindow(800, 600, "Gravity Sim", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(1600, 900, "Gravity Sim", NULL, NULL);
     if (!window) {
         std::cerr << "Failed to create GLFW window. Exiting..." << std::endl;
         glfwTerminate();
         exit(EXIT_FAILURE);
     }
     glfwMakeContextCurrent(window);
-    glViewport(0, 0, 800, 600);
+    glViewport(0, 0, 1600, 900);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
     glMatrixMode(GL_PROJECTION);
