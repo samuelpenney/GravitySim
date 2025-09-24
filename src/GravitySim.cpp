@@ -84,7 +84,7 @@ int main() {
         Planet2.position[0] += Planet2.velocity[0] * deltaTime;
         Planet2.position[1] += Planet2.velocity[1] * deltaTime;
 
-        // Add collision detection to prevent unrealistic behavior
+        
         if (Distance <= (Planet1.radius + Planet2.radius)) {
             std::cout << "Collision detected!\n";
             Planet1.velocity = {0.0, 0.0};
