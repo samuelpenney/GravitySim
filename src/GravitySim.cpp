@@ -5,28 +5,48 @@
 
 float SW = 800.0f; // Screen Width
 float SH = 600.0f; // Screen Height
-/*
+//double GravConst = 6.674e-11;
+double GravConst = 6.674e-3; // Was to small to actual change the planets visually
+
+
 class Object {
     public:
-        float mass;
-        std::vector<float> position = {0.0f, 0.0f};
-        std::vector<float> velocity = {0.0f, 0.0f};
-        float radius;
-}
-*/
+        double radius;
+        double mass;
+        std::vector<double> position = {0.0f, 0.0f};
+        std::vector<double> velocity = {0.0f, 0.0f};
+
+};
 
 GLFWwindow* StartGLFW();
 void DrawCircle(float centerX, float centerY, float radius, int points);
+double GetDis(const std::vector<double>& pos1, const std::vector<double>& pos2);
 
 int main() {
 
     GLFWwindow* window = StartGLFW();
 
+    Object Planet1;
+    Planet1.radius = 50.0;
+    Planet1.mass = 1e6;
+    Planet1.position[0] = 200.0;
+    Planet1.position[1] = 600.0;
+    Planet1.velocity[0] = 0.0;
+    Planet1.velocity[1] = 0.0;
+
+    Object Planet2;
+    Planet2.radius = 50.0;
+    Planet2.mass = 5e6;
+    Planet2.position[0] = 600.0;
+    Planet2.position[1] = 100.0;
+    Planet2.velocity[0] = 0.0;
+    Planet2.velocity[1] = 0.0;
 
     float centerX = SW / 2.0f;
     float centerY = SH / 2.0f;
     float radius = 50.0f;
     int points = 50;
+
 
     std::vector<float> position = {400.0f, 600.0f};
     std::vector<float> velocity = {0.0f, 0.0f};
@@ -40,26 +60,42 @@ int main() {
 
         glClear(GL_COLOR_BUFFER_BIT);
 
-        DrawCircle(position[0], position[1], radius, points);
+        //DrawCircle(position[0], position[1], radius, points);
+        DrawCircle(Planet1.position[0], Planet1.position[1], Planet1.radius, points);
+        DrawCircle(Planet2.position[0], Planet2.position[1], Planet2.radius, points);
 
+        double Distance = GetDis(Planet1.position, Planet2.position);
+        
+        double force = (GravConst * (Planet1.mass * Planet2.mass)) / (Distance * Distance);
+
+        std::vector<double> forceVec = {(Planet2.position[0] - Planet1.position[0]) / Distance, (Planet2.position[1] - Planet1.position[1]) / Distance};
+        forceVec[0] *= force;
+        forceVec[1] *= force;
+
+        Planet1.velocity[0] += ( forceVec[0] / Planet1.mass) * deltaTime;
+        Planet1.velocity[1] += ( forceVec[1] / Planet1.mass) * deltaTime;
+
+        Planet2.velocity[0] += (-forceVec[0] / Planet2.mass) * deltaTime;
+        Planet2.velocity[1] += (-forceVec[1] / Planet2.mass) * deltaTime;
+
+        Planet1.position[0] += Planet1.velocity[0] * deltaTime;
+        Planet1.position[1] += Planet1.velocity[1] * deltaTime;
+
+        Planet2.position[0] += Planet2.velocity[0] * deltaTime;
+        Planet2.position[1] += Planet2.velocity[1] * deltaTime;
+
+        // Add collision detection to prevent unrealistic behavior
+        if (Distance <= (Planet1.radius + Planet2.radius)) {
+            std::cout << "Collision detected!\n";
+            Planet1.velocity = {0.0, 0.0};
+            Planet2.velocity = {0.0, 0.0};
+        }
+
+        std::cout << "Planet1 Position: (" << Planet1.position[0] << ", " << Planet1.position[1] << ")\n";
+        std::cout << "Planet1 Velocity: (" << Planet1.velocity[0] << ", " << Planet1.velocity[1] << ")\n";
+        std::cout << "Planet2 Position: (" << Planet2.position[0] << ", " << Planet2.position[1] << ")\n";
+        std::cout << "Planet2 Velocity: (" << Planet2.velocity[0] << ", " << Planet2.velocity[1] << ")\n";
    
-        position[0] += velocity[0] * deltaTime;
-        position[1] += velocity[1] * deltaTime;
-        velocity[1] += -9.81 * deltaTime;
-
-  
-        if (position[1] - radius <= 0.0f || position[1] + radius >= SH) {
-            velocity[1] = -velocity[1] * 0.8f;
-        }
-        if (position[0] - radius <= 0.0f || position[0] + radius >= SW) {
-            velocity[0] = -velocity[0] * 0.8f;
-        }
-        if (position[1] - radius < 0.0f) position[1] = radius;
-        if (position[1] + radius > SH) position[1] = SH - radius;
-        if (position[0] - radius < 0.0f) position[0] = radius;
-        if (position[0] + radius > SW) position[0] = SW - radius;
-
-
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
@@ -67,14 +103,16 @@ int main() {
 }
 
 GLFWwindow* StartGLFW(){
-    if(!glfwInit()){
-        std::cerr<<"Failed to initialize glfw"<<std::endl;
+    if (!glfwInit()) {
+        std::cerr << "Failed to initialize GLFW. Exiting..." << std::endl;
+        exit(EXIT_FAILURE);
     }
+
     GLFWwindow* window = glfwCreateWindow(800, 600, "Gravity Sim", NULL, NULL);
     if (!window) {
-        std::cerr << "Failed to create GLFW window" << std::endl;
+        std::cerr << "Failed to create GLFW window. Exiting..." << std::endl;
         glfwTerminate();
-        return nullptr;
+        exit(EXIT_FAILURE);
     }
     glfwMakeContextCurrent(window);
     glViewport(0, 0, 800, 600);
@@ -105,3 +143,10 @@ void DrawCircle(float centerX, float centerY, float radius, int points){
         
         glEnd();
 }
+
+double GetDis(const std::vector<double>& pos1, const std::vector<double>& pos2) {
+    double dx = pos2[0] - pos1[0];
+    double dy = pos2[1] - pos1[1];
+    return std::sqrt(dx * dx + dy * dy);
+}
+
