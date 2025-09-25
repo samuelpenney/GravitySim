@@ -15,12 +15,13 @@ class Object {
         double mass;
         std::vector<double> position = {0.0f, 0.0f};
         std::vector<double> velocity = {0.0f, 0.0f};
-
+        
 };
 
 GLFWwindow* StartGLFW();
 void DrawCircle(float centerX, float centerY, float radius, int points);
 double GetDis(const std::vector<double>& pos1, const std::vector<double>& pos2);
+void DrawGrid(int GridSize, int CellSize);
 
 int main() {
 
@@ -28,7 +29,7 @@ int main() {
 
     Object Planet1;
     Planet1.radius = 15.0;
-    Planet1.mass = 3e6;
+    Planet1.mass = 1e6;
     Planet1.position[0] = 1000.0;
     Planet1.position[1] = 100.0;
     Planet1.velocity[0] = 0.0;
@@ -41,10 +42,6 @@ int main() {
     Planet2.position[1] = 50.0;
     Planet2.velocity[0] = 0.0;
     Planet2.velocity[1] = 0.0;
-
-    float centerX = SW / 2.0f;
-    float centerY = SH / 2.0f;
-    float radius = 50.0f;
     int points = 50;
 
 
@@ -59,8 +56,10 @@ int main() {
         previousTime = currentTime;
 
         glClear(GL_COLOR_BUFFER_BIT);
+        DrawGrid(1, 100.0f);
 
         //DrawCircle(position[0], position[1], radius, points);
+        glColor3f(1.0f, 1.0f, 1.0f);
         DrawCircle(Planet1.position[0], Planet1.position[1], Planet1.radius, points);
         DrawCircle(Planet2.position[0], Planet2.position[1], Planet2.radius, points);
 
@@ -150,3 +149,21 @@ double GetDis(const std::vector<double>& pos1, const std::vector<double>& pos2) 
     return std::sqrt(dx * dx + dy * dy);
 }
 
+void DrawGrid(int GridSize, int CellSize) {
+    glBegin(GL_LINES);
+    glColor3f(0.3f, 0.3f, 0.3f); // Set grid color
+
+    // Draw vertical lines
+    for (int x = 0; x <= SW; x += CellSize) {
+        glVertex2f(x, 0.0f);
+        glVertex2f(x, SH);
+    }
+
+    // Draw horizontal lines
+    for (int y = 0; y <= SH; y += CellSize) {
+        glVertex2f(0.0f, y);
+        glVertex2f(SW, y);
+    }
+
+    glEnd();
+}

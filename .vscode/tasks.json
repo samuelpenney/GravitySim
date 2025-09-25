@@ -7,16 +7,30 @@
             "args": [
                 "-fdiagnostics-color=always",
                 "-g",
-                "${workspaceFolder}\\src\\GravitySim.cpp",
+                "${workspaceFolder}\\src\\GravitySim3D.cpp",
                 "-o",
-                "${workspaceFolder}\\src\\GravitySim.exe",
+                "${workspaceFolder}\\src\\GravitySim3D.exe",
                 "-lglfw3",
                 "-lopengl32",
                 "-lgdi32",
+                "-lglew32",
+                "-lglu32",
                 "-I",
                 "C:\\msys64\\ucrt64\\include",
                 "-L",
-                "C:\\msys64\\ucrt64\\lib"
+                "C:\\msys64\\ucrt64\\lib",
+                "-I",
+                "C:\\msys64\\mingw64\\include",
+                "-L",
+                "C:\\msys64\\mingw64\\lib",
+                "-I",
+                "C:\\libs\\glew\\glew-2.1.0\\include\\GL",
+                "-L",
+                "C:\\libs\\glew\\glew-2.1.0\\include\\GL",
+                "-L",
+                "C:\\libs\\glew\\glew-2.1.0\\lib\\Release\\Win32",
+                "-I",
+                "C:\\libs\\glm"
             ],
             "options": {
                 "cwd": "C:\\msys64\\ucrt64\\bin"

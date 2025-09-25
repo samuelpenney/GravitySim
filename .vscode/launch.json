@@ -5,7 +5,7 @@
             "name": "g++ Debug",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}\\src\\GravitySim.exe",
+            "program": "${workspaceFolder}\\src\\GravitySim3D.exe",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
