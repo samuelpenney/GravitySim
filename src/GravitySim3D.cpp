@@ -209,6 +209,7 @@ class Object{
 void drawSphere(float centerX, float centerY, float centerZ, float radius, int stacks, int slices);
 double GetDis(const std::vector<double>& pos1, const std::vector<double>& pos2);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+void DrawGrid(int GridSize, int CellSize, GLuint colorLoc);
 
 int main() {
     GLFWwindow* window = StartGLFW();
@@ -256,6 +257,8 @@ int main() {
         glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
         GLuint colorLoc = glGetUniformLocation(shaderProgram, "color");
 
+        glUniform3f(colorLoc, 0.3f, 0.3f, 0.3f);
+        DrawGrid(1, 10.0f, colorLoc);
         glUniform3f(colorLoc, 1.0f, 0.0f, 0.0f);
         drawSphere(Planet1.position[0], Planet1.position[1], Planet1.position[2], Planet1.radius, stacks, slices);
         glUniform3f(colorLoc, 0.0f, 1.0f, 0.0f);
@@ -370,4 +373,23 @@ double GetDis(const std::vector<double>& pos1, const std::vector<double>& pos2) 
     double dx = pos2[0] - pos1[0];
     double dy = pos2[2] - pos1[2];
     return std::sqrt(dx * dx + dy * dy);
+}
+
+
+void DrawGrid(int GridSize, int CellSize, GLuint colorLoc) {
+    glBegin(GL_LINES);
+    glUniform3f(colorLoc, 0.3f, 0.3f, 0.3f);
+
+    for (int x = 0; x <= SW; x += CellSize) {
+        glVertex3f(x, 0.0f, 0.0f);
+        glVertex3f(x, 0.0f, SH);
+    }
+
+    for (int z = 0; z < SH; z += CellSize) {
+        glVertex3f(0.0f, 0.0f, z);
+        glVertex3f(SW, 0.0f, z);
+    }
+
+    glEnd();
+
 }
