@@ -15,7 +15,7 @@
 
 float SW = 1600.0f;
 float SH = 900.0f;
-double GravConst = 6.674e-11;
+double GravConst = 6.674e-5; // Raised to speed up sim
 
 const char* vertexShaderSource = R"glsl(
     #version 330 core
@@ -165,6 +165,14 @@ void processInput(GLFWwindow* window) {
         camera.ProcessKeyboard(GLFW_KEY_A, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         camera.ProcessKeyboard(GLFW_KEY_D, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+        camera.ProcessKeyboard(GLFW_KEY_W, (deltaTime * 5));
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+        camera.ProcessKeyboard(GLFW_KEY_A, (deltaTime * 5));
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+        camera.ProcessKeyboard(GLFW_KEY_S, (deltaTime * 5));
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+        camera.ProcessKeyboard(GLFW_KEY_D, (deltaTime * 5));
 
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
@@ -189,20 +197,49 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
     camera.ProcessMouseMovement(xoffset, yoffset);
 }
 
+class Object{
+    public:
+        double radius;
+        double mass;
+        std::vector<double> position = {0.0f, 0.0f, 0.0f};
+        std::vector<double> velocity = {0.0f, 0.0f, 0.0f};
+};
+
 
 void drawSphere(float centerX, float centerY, float centerZ, float radius, int stacks, int slices);
+double GetDis(const std::vector<double>& pos1, const std::vector<double>& pos2);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
 int main() {
     GLFWwindow* window = StartGLFW();
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-
     GLuint shaderProgram = CreateShaderProgram(vertexShaderSource, fragmentShaderSource);
-
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     glEnable(GL_DEPTH_TEST);
 
+    Object Planet1;
+    Planet1.radius = 1.0;
+    Planet1.mass = 1e6;
+    Planet1.position[0] = 10.0;
+    Planet1.position[1] = 0.0;
+    Planet1.position[2] = 10.0;
+    Planet1.velocity[0] = 0.0;
+    Planet1.velocity[1] = 0.0;
+    Planet1.velocity[2] = -3.0;
+
+    Object Planet2;
+    Planet2.radius = 2.0;
+    Planet2.mass = 5e6;
+    Planet2.position[0] = 0.0;
+    Planet2.position[1] = 0.0;
+    Planet2.position[2] = 0.0;
+    Planet2.velocity[0] = 0.0;
+    Planet2.velocity[1] = 0.0;
+    Planet2.velocity[2] = 0.0;
+
+    int stacks = 50;
+    int slices = 50;
 
     while (!glfwWindowShouldClose(window)) {
         float currentFrame = glfwGetTime();
@@ -210,23 +247,47 @@ int main() {
         lastFrame = currentFrame;
 
         processInput(window);
-
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
         glUseProgram(shaderProgram);
         GLuint viewLoc = glGetUniformLocation(shaderProgram, "view");
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(camera.GetViewMatrix()));
-
-
         GLuint projLoc = glGetUniformLocation(shaderProgram, "projection");
-        glm::mat4 projection = glm::perspective(glm::radians(45.0f), SW / SH, 0.1f, 100.0f);
+        glm::mat4 projection = glm::perspective(glm::radians(45.0f), SW / SH, 0.1f, 500.0f); // Change last value for render distance if needed
         glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
-
         GLuint colorLoc = glGetUniformLocation(shaderProgram, "color");
-        glUniform3f(colorLoc, 1.0f, 0.0f, 0.0f); // color
 
-        drawSphere(0.0f, 0.0f, -5.0f, 3.0f, 50, 50);
-        drawSphere(4.0f, 0.0f, -5.0f, 1.0f, 50, 50);
+        glUniform3f(colorLoc, 1.0f, 0.0f, 0.0f);
+        drawSphere(Planet1.position[0], Planet1.position[1], Planet1.position[2], Planet1.radius, stacks, slices);
+        glUniform3f(colorLoc, 0.0f, 1.0f, 0.0f);
+        drawSphere(Planet2.position[0], Planet2.position[1], Planet2.position[2], Planet2.radius, stacks, slices);
+
+        double Distance = GetDis(Planet1.position, Planet2.position);
+
+        double force = (GravConst * (Planet1.mass * Planet2.mass)) / (Distance * Distance);
+
+        std::vector<double> forceVec = {(Planet2.position[0] - Planet1.position[0]) / Distance, (Planet2.position[2] - Planet1.position[2]) / Distance};
+        forceVec[0] *= force;
+        forceVec[1] *= force;
+
+        Planet1.velocity[0] += (forceVec[0] / Planet1.mass) * deltaTime;
+        Planet1.velocity[2] += (forceVec[1] / Planet1.mass) * deltaTime;
+
+        Planet2.velocity[0] += (-forceVec[0] / Planet2.mass) * deltaTime;
+        Planet2.velocity[2] += (-forceVec[1] / Planet2.mass) * deltaTime;
+
+        Planet1.position[0] += Planet1.velocity[0] * deltaTime;
+        Planet1.position[2] += Planet1.velocity[2] * deltaTime;
+
+        Planet2.position[0] += Planet2.velocity[0] * deltaTime;
+        Planet2.position[2] += Planet2.velocity[2] * deltaTime;
+
+        if (Distance <= (Planet1.radius + Planet2.radius)) {
+            std::cout << "Collision detected!\n";
+            Planet1.velocity = {0.0f, 0.0f, 0.0f};
+            Planet2.velocity = {0.0f, 0.0f, 0.0f};
+        }
+
+
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -303,4 +364,10 @@ void drawSphere(float centerX, float centerY, float centerZ, float radius, int s
         }
         glEnd();
     }
+}
+
+double GetDis(const std::vector<double>& pos1, const std::vector<double>& pos2) {
+    double dx = pos2[0] - pos1[0];
+    double dy = pos2[2] - pos1[2];
+    return std::sqrt(dx * dx + dy * dy);
 }
