@@ -152,7 +152,7 @@ private:
     }
 };
 
-Camera camera(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 0.0f);
+Camera camera(glm::vec3(800.0f, 20.0f, 600.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 0.0f);
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
@@ -222,19 +222,19 @@ int main() {
     Object Planet1;
     Planet1.radius = 1.0;
     Planet1.mass = 1e6;
-    Planet1.position[0] = 10.0;
+    Planet1.position[0] = 810.0;
     Planet1.position[1] = 0.0;
-    Planet1.position[2] = 10.0;
-    Planet1.velocity[0] = 0.0;
+    Planet1.position[2] = 610.0;
+    Planet1.velocity[0] = -5.0;
     Planet1.velocity[1] = 0.0;
-    Planet1.velocity[2] = -3.0;
+    Planet1.velocity[2] = 0.0;
 
     Object Planet2;
     Planet2.radius = 2.0;
     Planet2.mass = 5e6;
-    Planet2.position[0] = 0.0;
+    Planet2.position[0] = 800.0;
     Planet2.position[1] = 0.0;
-    Planet2.position[2] = 0.0;
+    Planet2.position[2] = 600.0;
     Planet2.velocity[0] = 0.0;
     Planet2.velocity[1] = 0.0;
     Planet2.velocity[2] = 0.0;
@@ -242,10 +242,17 @@ int main() {
     int stacks = 50;
     int slices = 50;
 
+    double prevTime = glfwGetTime();
+
     while (!glfwWindowShouldClose(window)) {
         float currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
+
+        double CT = glfwGetTime();
+        double DT = (CT - prevTime); // *5 to speed up the sim
+        prevTime = CT;
+        
 
         processInput(window);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -268,21 +275,26 @@ int main() {
 
         double force = (GravConst * (Planet1.mass * Planet2.mass)) / (Distance * Distance);
 
-        std::vector<double> forceVec = {(Planet2.position[0] - Planet1.position[0]) / Distance, (Planet2.position[2] - Planet1.position[2]) / Distance};
+        std::vector<double> forceVec = {(Planet2.position[0] - Planet1.position[0]) / Distance, (Planet2.position[1] - Planet1.position[1]) / Distance, (Planet2.position[2] - Planet1.position[2]) / Distance};
         forceVec[0] *= force;
         forceVec[1] *= force;
+        forceVec[2] *= force;
 
-        Planet1.velocity[0] += (forceVec[0] / Planet1.mass) * deltaTime;
-        Planet1.velocity[2] += (forceVec[1] / Planet1.mass) * deltaTime;
+        Planet1.velocity[0] += (forceVec[0] / Planet1.mass) * DT;
+        Planet1.velocity[1] += (forceVec[1] / Planet1.mass) * DT;
+        Planet1.velocity[2] += (forceVec[2] / Planet1.mass) * DT;
 
-        Planet2.velocity[0] += (-forceVec[0] / Planet2.mass) * deltaTime;
-        Planet2.velocity[2] += (-forceVec[1] / Planet2.mass) * deltaTime;
+        Planet2.velocity[0] -= (forceVec[0] / Planet2.mass) * DT;
+        Planet2.velocity[1] -= (forceVec[1] / Planet2.mass) * DT;
+        Planet2.velocity[2] -= (forceVec[2] / Planet2.mass) * DT;
 
-        Planet1.position[0] += Planet1.velocity[0] * deltaTime;
-        Planet1.position[2] += Planet1.velocity[2] * deltaTime;
+        Planet1.position[0] += Planet1.velocity[0] * DT;
+        Planet1.position[1] += Planet1.velocity[1] * DT;
+        Planet1.position[2] += Planet1.velocity[2] * DT;
 
-        Planet2.position[0] += Planet2.velocity[0] * deltaTime;
-        Planet2.position[2] += Planet2.velocity[2] * deltaTime;
+        Planet2.position[0] += Planet2.velocity[0] * DT;
+        Planet2.position[1] += Planet2.velocity[1] * DT;
+        Planet2.position[2] += Planet2.velocity[2] * DT;
 
         if (Distance <= (Planet1.radius + Planet2.radius)) {
             std::cout << "Collision detected!\n";
@@ -319,11 +331,10 @@ GLFWwindow* StartGLFW(){
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(45.0, SW / SH, 0.1, 100.0); // Switch to perspective projection
+    gluPerspective(45.0, SW / SH, 0.1, 100.0);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    // Initialize GLEW
     if (glewInit() != GLEW_OK) {
         std::cerr << "Failed to initialize GLEW. Exiting..." << std::endl;
         exit(EXIT_FAILURE);
@@ -336,7 +347,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(45.0, (float)width / (float)height, 0.1, 100.0); // Update aspect ratio
+    gluPerspective(45.0, (float)width / (float)height, 0.1, 100.0);
     glMatrixMode(GL_MODELVIEW);
 }
 
@@ -371,8 +382,9 @@ void drawSphere(float centerX, float centerY, float centerZ, float radius, int s
 
 double GetDis(const std::vector<double>& pos1, const std::vector<double>& pos2) {
     double dx = pos2[0] - pos1[0];
-    double dy = pos2[2] - pos1[2];
-    return std::sqrt(dx * dx + dy * dy);
+    double dy = pos2[1] - pos1[1];
+    double dz = pos2[2] - pos1[2];
+    return std::sqrt(dx * dx + dy * dy + dz * dz);
 }
 
 
