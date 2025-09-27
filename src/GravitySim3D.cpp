@@ -210,6 +210,7 @@ void drawSphere(float centerX, float centerY, float centerZ, float radius, int s
 double GetDis(const std::vector<double>& pos1, const std::vector<double>& pos2);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void DrawGrid(int GridSize, int CellSize, GLuint colorLoc);
+void PhysicsProcess(std::vector<double>& pla1POS, std::vector<double>& pla1VEL, std::vector<double>& pla2POS, std::vector<double>& pla2VEL, double pla1MASS, double pla2MASS, double DT);
 
 int main() {
     GLFWwindow* window = StartGLFW();
@@ -225,7 +226,7 @@ int main() {
     Planet1.position[0] = 810.0;
     Planet1.position[1] = 0.0;
     Planet1.position[2] = 610.0;
-    Planet1.velocity[0] = -5.0;
+    Planet1.velocity[0] = -5.6;
     Planet1.velocity[1] = 0.0;
     Planet1.velocity[2] = 0.0;
 
@@ -238,6 +239,8 @@ int main() {
     Planet2.velocity[0] = 0.0;
     Planet2.velocity[1] = 0.0;
     Planet2.velocity[2] = 0.0;
+
+    
 
     int stacks = 50;
     int slices = 50;
@@ -260,7 +263,7 @@ int main() {
         GLuint viewLoc = glGetUniformLocation(shaderProgram, "view");
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(camera.GetViewMatrix()));
         GLuint projLoc = glGetUniformLocation(shaderProgram, "projection");
-        glm::mat4 projection = glm::perspective(glm::radians(45.0f), SW / SH, 0.1f, 500.0f); // Change last value for render distance if needed
+        glm::mat4 projection = glm::perspective(glm::radians(45.0f), SW / SH, 0.1f, 1000.0f); // Change last value for render distance if needed
         glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
         GLuint colorLoc = glGetUniformLocation(shaderProgram, "color");
 
@@ -271,36 +274,7 @@ int main() {
         glUniform3f(colorLoc, 0.0f, 1.0f, 0.0f);
         drawSphere(Planet2.position[0], Planet2.position[1], Planet2.position[2], Planet2.radius, stacks, slices);
 
-        double Distance = GetDis(Planet1.position, Planet2.position);
-
-        double force = (GravConst * (Planet1.mass * Planet2.mass)) / (Distance * Distance);
-
-        std::vector<double> forceVec = {(Planet2.position[0] - Planet1.position[0]) / Distance, (Planet2.position[1] - Planet1.position[1]) / Distance, (Planet2.position[2] - Planet1.position[2]) / Distance};
-        forceVec[0] *= force;
-        forceVec[1] *= force;
-        forceVec[2] *= force;
-
-        Planet1.velocity[0] += (forceVec[0] / Planet1.mass) * DT;
-        Planet1.velocity[1] += (forceVec[1] / Planet1.mass) * DT;
-        Planet1.velocity[2] += (forceVec[2] / Planet1.mass) * DT;
-
-        Planet2.velocity[0] -= (forceVec[0] / Planet2.mass) * DT;
-        Planet2.velocity[1] -= (forceVec[1] / Planet2.mass) * DT;
-        Planet2.velocity[2] -= (forceVec[2] / Planet2.mass) * DT;
-
-        Planet1.position[0] += Planet1.velocity[0] * DT;
-        Planet1.position[1] += Planet1.velocity[1] * DT;
-        Planet1.position[2] += Planet1.velocity[2] * DT;
-
-        Planet2.position[0] += Planet2.velocity[0] * DT;
-        Planet2.position[1] += Planet2.velocity[1] * DT;
-        Planet2.position[2] += Planet2.velocity[2] * DT;
-
-        if (Distance <= (Planet1.radius + Planet2.radius)) {
-            std::cout << "Collision detected!\n";
-            Planet1.velocity = {0.0f, 0.0f, 0.0f};
-            Planet2.velocity = {0.0f, 0.0f, 0.0f};
-        }
+        PhysicsProcess(Planet1.position, Planet1.velocity, Planet2.position, Planet2.velocity, Planet1.mass, Planet2.mass, DT);
 
 
 
@@ -351,7 +325,6 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glMatrixMode(GL_MODELVIEW);
 }
 
-
 void drawSphere(float centerX, float centerY, float centerZ, float radius, int stacks, int slices) {
     for (int i = 0; i <= stacks; ++i) {
         float stackAngle1 = M_PI / 2 - i * M_PI / stacks;
@@ -387,7 +360,6 @@ double GetDis(const std::vector<double>& pos1, const std::vector<double>& pos2) 
     return std::sqrt(dx * dx + dy * dy + dz * dz);
 }
 
-
 void DrawGrid(int GridSize, int CellSize, GLuint colorLoc) {
     glBegin(GL_LINES);
     glUniform3f(colorLoc, 0.3f, 0.3f, 0.3f);
@@ -404,4 +376,33 @@ void DrawGrid(int GridSize, int CellSize, GLuint colorLoc) {
 
     glEnd();
 
+}
+
+void PhysicsProcess(std::vector<double>& pla1POS, std::vector<double>& pla1VEL, std::vector<double>& pla2POS, std::vector<double>& pla2VEL, double pla1MASS, double pla2MASS, double DT) {
+    double Distance = GetDis(pla1POS, pla2POS);
+
+    double force = (GravConst * (pla1MASS * pla2MASS)) / (Distance * Distance);
+    
+    std::vector<double> forceVec = {(pla2POS[0] - pla1POS[0]) / Distance, (pla2POS[1] - pla1POS[1]) / Distance, (pla2POS[2] - pla1POS[2]) / Distance};
+    forceVec[0] *= force;
+    forceVec[1] *= force;
+    forceVec[2] *= force;
+
+    pla1VEL[0] += (forceVec[0] / pla1MASS) * DT;
+    pla1VEL[1] += (forceVec[1] / pla1MASS) * DT;
+    pla1VEL[2] += (forceVec[2] / pla1MASS) * DT;
+
+    pla2VEL[0] -= (forceVec[0] / pla2MASS) * DT;
+    pla2VEL[1] -= (forceVec[1] / pla2MASS) * DT;
+    pla2VEL[2] -= (forceVec[2] / pla2MASS) * DT;
+
+    pla1POS[0] += pla1VEL[0] * DT;
+    pla1POS[1] += pla1VEL[1] * DT;
+    pla1POS[2] += pla1VEL[2] * DT;
+
+    pla2POS[0] += pla2VEL[0] * DT;
+    pla2POS[1] += pla2VEL[1] * DT;
+    pla2POS[2] += pla2VEL[2] * DT;
+ 
+    
 }
