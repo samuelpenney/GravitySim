@@ -15,7 +15,7 @@
 
 float SW = 1600.0f;
 float SH = 900.0f;
-double GravConst = 6.674e-5; // Raised to speed up sim
+const double GravConst = 6.674e-5; // Raised to speed up sim
 
 const char* vertexShaderSource = R"glsl(
     #version 330 core
@@ -152,7 +152,7 @@ private:
     }
 };
 
-Camera camera(glm::vec3(800.0f, 20.0f, 600.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 0.0f);
+Camera camera(glm::vec3(1500.0f, 20.0f, 1500.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 0.0f);
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
@@ -166,13 +166,13 @@ void processInput(GLFWwindow* window) {
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         camera.ProcessKeyboard(GLFW_KEY_D, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
-        camera.ProcessKeyboard(GLFW_KEY_W, (deltaTime * 5));
+        camera.ProcessKeyboard(GLFW_KEY_W, (deltaTime * 15));
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
-        camera.ProcessKeyboard(GLFW_KEY_A, (deltaTime * 5));
+        camera.ProcessKeyboard(GLFW_KEY_A, (deltaTime * 15));
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
-        camera.ProcessKeyboard(GLFW_KEY_S, (deltaTime * 5));
+        camera.ProcessKeyboard(GLFW_KEY_S, (deltaTime * 15));
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
-        camera.ProcessKeyboard(GLFW_KEY_D, (deltaTime * 5));
+        camera.ProcessKeyboard(GLFW_KEY_D, (deltaTime * 15));
 
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
@@ -223,24 +223,33 @@ int main() {
     Object Planet1;
     Planet1.radius = 1.0;
     Planet1.mass = 1e6;
-    Planet1.position[0] = 810.0;
+    Planet1.position[0] = 1510.0; // x[0], y[1], z[2]
     Planet1.position[1] = 0.0;
-    Planet1.position[2] = 610.0;
-    Planet1.velocity[0] = -5.6;
+    Planet1.position[2] = 1510.0;
+    Planet1.velocity[0] = -18.6;
     Planet1.velocity[1] = 0.0;
     Planet1.velocity[2] = 0.0;
 
     Object Planet2;
     Planet2.radius = 2.0;
     Planet2.mass = 5e6;
-    Planet2.position[0] = 800.0;
+    Planet2.position[0] = 1500.0;
     Planet2.position[1] = 0.0;
-    Planet2.position[2] = 600.0;
-    Planet2.velocity[0] = 0.0;
+    Planet2.position[2] = 1500.0;
+    Planet2.velocity[0] = -15.0;
     Planet2.velocity[1] = 0.0;
     Planet2.velocity[2] = 0.0;
 
-    
+    Object Planet3;
+    Planet3.radius = 5.0;
+    Planet3.mass = 5e9;
+    Planet3.position[0] = 1000;
+    Planet3.position[1] = 0.0;
+    Planet3.position[2] = 1000.0;
+    Planet3.velocity[0] = 0.0;
+    Planet3.velocity[1] = 0.0;
+    Planet3.velocity[2] = 0.0;
+
 
     int stacks = 50;
     int slices = 50;
@@ -263,19 +272,22 @@ int main() {
         GLuint viewLoc = glGetUniformLocation(shaderProgram, "view");
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(camera.GetViewMatrix()));
         GLuint projLoc = glGetUniformLocation(shaderProgram, "projection");
-        glm::mat4 projection = glm::perspective(glm::radians(45.0f), SW / SH, 0.1f, 1000.0f); // Change last value for render distance if needed
+        glm::mat4 projection = glm::perspective(glm::radians(45.0f), SW / SH, 0.1f, 3000.0f); // Change last value for render distance if needed
         glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
         GLuint colorLoc = glGetUniformLocation(shaderProgram, "color");
 
         glUniform3f(colorLoc, 0.3f, 0.3f, 0.3f);
-        DrawGrid(1, 10.0f, colorLoc);
+        DrawGrid(100, 100.0f, colorLoc);
         glUniform3f(colorLoc, 1.0f, 0.0f, 0.0f);
         drawSphere(Planet1.position[0], Planet1.position[1], Planet1.position[2], Planet1.radius, stacks, slices);
         glUniform3f(colorLoc, 0.0f, 1.0f, 0.0f);
         drawSphere(Planet2.position[0], Planet2.position[1], Planet2.position[2], Planet2.radius, stacks, slices);
+        glUniform3f(colorLoc, 0.0f, 1.0f, 1.0f);
+        drawSphere(Planet3.position[0], Planet3.position[1], Planet3.position[2], Planet3.radius, stacks, slices);
 
         PhysicsProcess(Planet1.position, Planet1.velocity, Planet2.position, Planet2.velocity, Planet1.mass, Planet2.mass, DT);
-
+        PhysicsProcess(Planet1.position, Planet1.velocity, Planet3.position, Planet3.velocity, Planet1.mass, Planet3.mass, DT);
+        PhysicsProcess(Planet2.position, Planet2.velocity, Planet3.position, Planet3.velocity, Planet2.mass, Planet3.mass, DT);
 
 
         glfwSwapBuffers(window);
@@ -364,14 +376,14 @@ void DrawGrid(int GridSize, int CellSize, GLuint colorLoc) {
     glBegin(GL_LINES);
     glUniform3f(colorLoc, 0.3f, 0.3f, 0.3f);
 
-    for (int x = 0; x <= SW; x += CellSize) {
+    for (int x = 0; x <= 3000; x += CellSize) {
         glVertex3f(x, 0.0f, 0.0f);
-        glVertex3f(x, 0.0f, SH);
+        glVertex3f(x, 0.0f, 3000);
     }
 
-    for (int z = 0; z < SH; z += CellSize) {
+    for (int z = 0; z < 3000; z += CellSize) {
         glVertex3f(0.0f, 0.0f, z);
-        glVertex3f(SW, 0.0f, z);
+        glVertex3f(3000, 0.0f, z);
     }
 
     glEnd();
