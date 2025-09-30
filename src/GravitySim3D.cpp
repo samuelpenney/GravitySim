@@ -8,14 +8,13 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
-
-
 float SW = 1600.0f;
 float SH = 900.0f;
 const double GravConst = 6.674e-5; // Raised to speed up sim
+const double PI = 3.14159265358979323846;
+int stacks = 50;
+int slices = 50;
+
 
 const char* vertexShaderSource = R"glsl(
     #version 330 core
@@ -198,11 +197,40 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
 }
 
 class Object{
-    public:
-        double radius;
-        double mass;
-        std::vector<double> position = {0.0f, 0.0f, 0.0f};
-        std::vector<double> velocity = {0.0f, 0.0f, 0.0f};
+public:
+    double radius;
+    double mass;
+    std::vector<double> position = {0.0f, 0.0f, 0.0f};
+    std::vector<double> velocity = {0.0f, 0.0f, 0.0f};
+
+    void drawObject() {
+        for (int i = 0; i <= stacks; ++i) {
+            float stackAngle1 = PI / 2 - i * PI / stacks;
+            float stackAngle2 = PI / 2 - (i + 1) * PI / stacks;
+
+            float xy1 = radius * cos(stackAngle1);
+            float z1 = radius * sin(stackAngle1);
+
+            float xy2 = radius * cos(stackAngle2);
+            float z2 = radius * sin(stackAngle2);
+
+            glBegin(GL_TRIANGLE_STRIP);
+            for (int j = 0; j <= slices; ++j) {
+                float sliceAngle = j * 2 * PI / slices;
+
+                float x1 = xy1 * cos(sliceAngle);
+                float y1 = xy1 * sin(sliceAngle);
+                    
+                float x2 = xy2 * cos(sliceAngle);
+                float y2 = xy2 * sin(sliceAngle);
+
+                glVertex3f(position[0] + x1, position[1] + y1, position[2] + z1);
+                glVertex3f(position[0] + x2, position[1] + y2, position[2] + z2);
+            }
+            glEnd();
+        }
+    }
+
 };
 
 
@@ -221,12 +249,12 @@ int main() {
     glEnable(GL_DEPTH_TEST);
 
     Object Planet1;
-    Planet1.radius = 1.0;
+    Planet1.radius = 10.0;
     Planet1.mass = 1e6;
-    Planet1.position[0] = 1510.0; // x[0], y[1], z[2]
+    Planet1.position[0] = 1510.0;
     Planet1.position[1] = 0.0;
     Planet1.position[2] = 1510.0;
-    Planet1.velocity[0] = -18.6;
+    Planet1.velocity[0] = 0.0;
     Planet1.velocity[1] = 0.0;
     Planet1.velocity[2] = 0.0;
 
@@ -236,23 +264,9 @@ int main() {
     Planet2.position[0] = 1500.0;
     Planet2.position[1] = 0.0;
     Planet2.position[2] = 1500.0;
-    Planet2.velocity[0] = -15.0;
+    Planet2.velocity[0] = 0.0;
     Planet2.velocity[1] = 0.0;
     Planet2.velocity[2] = 0.0;
-
-    Object Planet3;
-    Planet3.radius = 5.0;
-    Planet3.mass = 5e9;
-    Planet3.position[0] = 1000;
-    Planet3.position[1] = 0.0;
-    Planet3.position[2] = 1000.0;
-    Planet3.velocity[0] = 0.0;
-    Planet3.velocity[1] = 0.0;
-    Planet3.velocity[2] = 0.0;
-
-
-    int stacks = 50;
-    int slices = 50;
 
     double prevTime = glfwGetTime();
 
@@ -279,15 +293,13 @@ int main() {
         glUniform3f(colorLoc, 0.3f, 0.3f, 0.3f);
         DrawGrid(100, 100.0f, colorLoc);
         glUniform3f(colorLoc, 1.0f, 0.0f, 0.0f);
-        drawSphere(Planet1.position[0], Planet1.position[1], Planet1.position[2], Planet1.radius, stacks, slices);
+        Planet1.drawObject();
         glUniform3f(colorLoc, 0.0f, 1.0f, 0.0f);
-        drawSphere(Planet2.position[0], Planet2.position[1], Planet2.position[2], Planet2.radius, stacks, slices);
+        Planet2.drawObject();
         glUniform3f(colorLoc, 0.0f, 1.0f, 1.0f);
-        drawSphere(Planet3.position[0], Planet3.position[1], Planet3.position[2], Planet3.radius, stacks, slices);
 
         PhysicsProcess(Planet1.position, Planet1.velocity, Planet2.position, Planet2.velocity, Planet1.mass, Planet2.mass, DT);
-        PhysicsProcess(Planet1.position, Planet1.velocity, Planet3.position, Planet3.velocity, Planet1.mass, Planet3.mass, DT);
-        PhysicsProcess(Planet2.position, Planet2.velocity, Planet3.position, Planet3.velocity, Planet2.mass, Planet3.mass, DT);
+
 
 
         glfwSwapBuffers(window);
@@ -335,34 +347,6 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glLoadIdentity();
     gluPerspective(45.0, (float)width / (float)height, 0.1, 100.0);
     glMatrixMode(GL_MODELVIEW);
-}
-
-void drawSphere(float centerX, float centerY, float centerZ, float radius, int stacks, int slices) {
-    for (int i = 0; i <= stacks; ++i) {
-        float stackAngle1 = M_PI / 2 - i * M_PI / stacks;
-        float stackAngle2 = M_PI / 2 - (i + 1) * M_PI / stacks;
-
-        float xy1 = radius * cos(stackAngle1);
-        float z1 = radius * sin(stackAngle1);
-
-        float xy2 = radius * cos(stackAngle2);
-        float z2 = radius * sin(stackAngle2);
-
-        glBegin(GL_TRIANGLE_STRIP);
-        for (int j = 0; j <= slices; ++j) {
-            float sliceAngle = j * 2 * M_PI / slices;
-
-            float x1 = xy1 * cos(sliceAngle);
-            float y1 = xy1 * sin(sliceAngle);
-
-            float x2 = xy2 * cos(sliceAngle);
-            float y2 = xy2 * sin(sliceAngle);
-
-            glVertex3f(centerX + x1, centerY + y1, centerZ + z1);
-            glVertex3f(centerX + x2, centerY + y2, centerZ + z2);
-        }
-        glEnd();
-    }
 }
 
 double GetDis(const std::vector<double>& pos1, const std::vector<double>& pos2) {

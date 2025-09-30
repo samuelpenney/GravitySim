@@ -5,8 +5,7 @@
 
 float SW = 1600.0f; // Screen Width
 float SH = 900.0f; // Screen Height
-//double GravConst = 6.674e-11;
-double GravConst = 6.674e-3; // Was to small to actual change the planets visually
+const double GravConst = 6.674e-3; // Was to small to actual change the planets visually
 
 
 class Object {
@@ -22,6 +21,7 @@ GLFWwindow* StartGLFW();
 void DrawCircle(float centerX, float centerY, float radius, int points);
 double GetDis(const std::vector<double>& pos1, const std::vector<double>& pos2);
 void DrawGrid(int GridSize, int CellSize);
+void PhysicsProcess(std::vector<double>& P1_POS, std::vector<double>& P1_VEL, double P1_MASS, std::vector<double>& P2_POS, std::vector<double>& P2_VEL, double P2_MASS, double deltaTime);
 
 int main() {
 
@@ -63,32 +63,7 @@ int main() {
         DrawCircle(Planet1.position[0], Planet1.position[1], Planet1.radius, points);
         DrawCircle(Planet2.position[0], Planet2.position[1], Planet2.radius, points);
 
-        double Distance = GetDis(Planet1.position, Planet2.position);
-        
-        double force = (GravConst * (Planet1.mass * Planet2.mass)) / (Distance * Distance);
-
-        std::vector<double> forceVec = {(Planet2.position[0] - Planet1.position[0]) / Distance, (Planet2.position[1] - Planet1.position[1]) / Distance};
-        forceVec[0] *= force;
-        forceVec[1] *= force;
-
-        Planet1.velocity[0] += ( forceVec[0] / Planet1.mass) * deltaTime;
-        Planet1.velocity[1] += ( forceVec[1] / Planet1.mass) * deltaTime;
-
-        Planet2.velocity[0] += (-forceVec[0] / Planet2.mass) * deltaTime;
-        Planet2.velocity[1] += (-forceVec[1] / Planet2.mass) * deltaTime;
-
-        Planet1.position[0] += Planet1.velocity[0] * deltaTime;
-        Planet1.position[1] += Planet1.velocity[1] * deltaTime;
-
-        Planet2.position[0] += Planet2.velocity[0] * deltaTime;
-        Planet2.position[1] += Planet2.velocity[1] * deltaTime;
-
-        
-        if (Distance <= (Planet1.radius + Planet2.radius)) {
-            std::cout << "Collision detected!\n";
-            Planet1.velocity = {0.0, 0.0};
-            Planet2.velocity = {0.0, 0.0};
-        }
+        PhysicsProcess(Planet1.position, Planet1.velocity, Planet1.mass, Planet2.position, Planet2.velocity, Planet2.mass, deltaTime);
 
         std::cout << "Planet1 Position: (" << Planet1.position[0] << ", " << Planet1.position[1] << ")\n";
         std::cout << "Planet1 Velocity: (" << Planet1.velocity[0] << ", " << Planet1.velocity[1] << ")\n";
@@ -166,4 +141,27 @@ void DrawGrid(int GridSize, int CellSize) {
     }
 
     glEnd();
+}
+
+void PhysicsProcess(std::vector<double>& P1_POS, std::vector<double>& P1_VEL, double P1_MASS, std::vector<double>& P2_POS, std::vector<double>& P2_VEL, double P2_MASS, double deltaTime) {
+    double Distance = GetDis(P1_POS, P2_POS);
+
+    double force = (GravConst * (P1_MASS * P2_MASS)) / (Distance * Distance);
+
+    std::vector<double> forceVec{(P2_POS[0] - P1_POS[0]) / Distance, (P2_POS[1] - P1_POS[1]) / Distance};
+    forceVec[0] *= force;
+    forceVec[1] *= force;
+
+    P1_VEL[0] += (forceVec[0] / P1_MASS) * deltaTime;
+    P1_VEL[1] += (forceVec[1] / P1_MASS) * deltaTime;
+
+    P2_VEL[0] += (forceVec[0] / P2_MASS) * deltaTime;
+    P2_VEL[1] += (forceVec[1] / P2_MASS) * deltaTime;
+
+    P1_POS[0] += P1_VEL[0] * deltaTime;
+    P1_POS[1] += P1_VEL[1] * deltaTime;
+
+    P2_POS[0] += P2_VEL[0] * deltaTime;
+    P2_POS[1] += P2_VEL[1] * deltaTime;
+
 }
