@@ -14,6 +14,7 @@ const double GravConst = 6.674e-5; // Raised to speed up sim
 const double PI = 3.14159265358979323846;
 int stacks = 50;
 int slices = 50;
+bool Collision = false;
 
 
 const char* vertexShaderSource = R"glsl(
@@ -198,6 +199,7 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
 
 class Object{
 public:
+    std::string name;
     double radius;
     double mass;
     std::vector<double> position = {0.0f, 0.0f, 0.0f};
@@ -248,6 +250,7 @@ int main() {
     glEnable(GL_DEPTH_TEST);
 
     Object Planet1;
+    Planet1.name = "Planet1";
     Planet1.radius = 1.0;
     Planet1.mass = 1e6;
     Planet1.position[0] = 1520.0;
@@ -258,6 +261,7 @@ int main() {
     Planet1.velocity[2] = -2.0;
 
     Object Planet2;
+    Planet2.name = "Planet2";
     Planet2.radius = 2.0;
     Planet2.mass = 5e6;
     Planet2.position[0] = 1500.0;
@@ -265,7 +269,18 @@ int main() {
     Planet2.position[2] = 1500.0;
     Planet2.velocity[0] = 0.0;
     Planet2.velocity[1] = 0.0;
-    Planet2.velocity[2] = 0.0;
+    Planet2.velocity[2] = -1.0;
+
+    Object Planet3;
+    Planet3.name = "Planet3";
+    Planet3.radius = 3.0;
+    Planet3.mass = 2e7;
+    Planet3.position[0] = 1450.0;
+    Planet3.position[1] = 0.0;
+    Planet3.position[2] = 1450.0;
+    Planet3.velocity[0] = 0.0;
+    Planet3.velocity[1] = 0.0;
+    Planet3.velocity[2] = 0.0;
 
     double prevTime = glfwGetTime();
 
@@ -295,12 +310,18 @@ int main() {
         Planet1.drawObject();
         glUniform3f(colorLoc, 0.0f, 1.0f, 0.0f);
         Planet2.drawObject();
+        glUniform3f(colorLoc, 1.0f, 1.0f, 0.0f);
+        Planet3.drawObject();
 
+        Collision = CollisionDet(Planet1, Planet2);
+        Collision = CollisionDet(Planet1, Planet3);
+        Collision = CollisionDet(Planet2, Planet3);
 
-        bool Collision = CollisionDet(Planet1, Planet2);
         if (!Collision) {
             PhysicsProcess(Planet1, Planet2, DT);
-        }
+            PhysicsProcess(Planet1, Planet3, DT);
+            PhysicsProcess(Planet2, Planet3, DT);
+        } 
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -406,7 +427,7 @@ bool CollisionDet(Object& Object1, Object& Object2) {
     bool Collision = false;
 
     if (Distance <= (Object1.radius + Object2.radius)) {
-        std::cout << "Collision" << std::endl;
+        std::cout << "Collision between " << Object1.name << " and " << Object2.name << std::endl;
         Object1.velocity = {0.0f, 0.0f, 0.0f};
         Object2.velocity = {0.0f, 0.0f, 0.0f};
         Collision = true;
