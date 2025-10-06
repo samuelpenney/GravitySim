@@ -233,12 +233,11 @@ public:
 
 };
 
-
-void drawSphere(float centerX, float centerY, float centerZ, float radius, int stacks, int slices);
 double GetDis(const std::vector<double>& pos1, const std::vector<double>& pos2);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void DrawGrid(int GridSize, int CellSize, GLuint colorLoc);
-void PhysicsProcess(std::vector<double>& pla1POS, std::vector<double>& pla1VEL, std::vector<double>& pla2POS, std::vector<double>& pla2VEL, double pla1MASS, double pla2MASS, double DT);
+void PhysicsProcess(Object& Object1, Object& Object2, double DT);
+bool CollisionDet(Object& Object1, Object& Object2);
 
 int main() {
     GLFWwindow* window = StartGLFW();
@@ -249,14 +248,14 @@ int main() {
     glEnable(GL_DEPTH_TEST);
 
     Object Planet1;
-    Planet1.radius = 10.0;
+    Planet1.radius = 1.0;
     Planet1.mass = 1e6;
-    Planet1.position[0] = 1510.0;
+    Planet1.position[0] = 1520.0;
     Planet1.position[1] = 0.0;
-    Planet1.position[2] = 1510.0;
+    Planet1.position[2] = 1520.0;
     Planet1.velocity[0] = 0.0;
     Planet1.velocity[1] = 0.0;
-    Planet1.velocity[2] = 0.0;
+    Planet1.velocity[2] = -2.0;
 
     Object Planet2;
     Planet2.radius = 2.0;
@@ -289,18 +288,19 @@ int main() {
         glm::mat4 projection = glm::perspective(glm::radians(45.0f), SW / SH, 0.1f, 3000.0f); // Change last value for render distance if needed
         glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
         GLuint colorLoc = glGetUniformLocation(shaderProgram, "color");
-
         glUniform3f(colorLoc, 0.3f, 0.3f, 0.3f);
         DrawGrid(100, 100.0f, colorLoc);
+
         glUniform3f(colorLoc, 1.0f, 0.0f, 0.0f);
         Planet1.drawObject();
         glUniform3f(colorLoc, 0.0f, 1.0f, 0.0f);
         Planet2.drawObject();
-        glUniform3f(colorLoc, 0.0f, 1.0f, 1.0f);
-
-        PhysicsProcess(Planet1.position, Planet1.velocity, Planet2.position, Planet2.velocity, Planet1.mass, Planet2.mass, DT);
 
 
+        bool Collision = CollisionDet(Planet1, Planet2);
+        if (!Collision) {
+            PhysicsProcess(Planet1, Planet2, DT);
+        }
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -374,31 +374,42 @@ void DrawGrid(int GridSize, int CellSize, GLuint colorLoc) {
 
 }
 
-void PhysicsProcess(std::vector<double>& pla1POS, std::vector<double>& pla1VEL, std::vector<double>& pla2POS, std::vector<double>& pla2VEL, double pla1MASS, double pla2MASS, double DT) {
-    double Distance = GetDis(pla1POS, pla2POS);
+void PhysicsProcess(Object& Object1, Object& Object2, double DT) {
+    double Distance = GetDis(Object1.position, Object2.position);
 
-    double force = (GravConst * (pla1MASS * pla2MASS)) / (Distance * Distance);
+    double force = (GravConst * (Object1.mass * Object2.mass)) / (Distance * Distance);
     
-    std::vector<double> forceVec = {(pla2POS[0] - pla1POS[0]) / Distance, (pla2POS[1] - pla1POS[1]) / Distance, (pla2POS[2] - pla1POS[2]) / Distance};
+    std::vector<double> forceVec = {(Object2.position[0] - Object1.position[0]) / Distance, (Object2.position[1] - Object1.position[1]) / Distance, (Object2.position[2] - Object1.position[2]) / Distance};
     forceVec[0] *= force;
     forceVec[1] *= force;
     forceVec[2] *= force;
 
-    pla1VEL[0] += (forceVec[0] / pla1MASS) * DT;
-    pla1VEL[1] += (forceVec[1] / pla1MASS) * DT;
-    pla1VEL[2] += (forceVec[2] / pla1MASS) * DT;
+    Object1.velocity[0] += (forceVec[0] / Object1.mass) * DT;
+    Object1.velocity[1] += (forceVec[1] / Object1.mass) * DT;
+    Object1.velocity[2] += (forceVec[2] / Object1.mass) * DT;
 
-    pla2VEL[0] -= (forceVec[0] / pla2MASS) * DT;
-    pla2VEL[1] -= (forceVec[1] / pla2MASS) * DT;
-    pla2VEL[2] -= (forceVec[2] / pla2MASS) * DT;
+    Object2.velocity[0] -= (forceVec[0] / Object2.mass) * DT;
+    Object2.velocity[1] -= (forceVec[1] / Object2.mass) * DT;
+    Object2.velocity[2] -= (forceVec[2] / Object2.mass) * DT;
 
-    pla1POS[0] += pla1VEL[0] * DT;
-    pla1POS[1] += pla1VEL[1] * DT;
-    pla1POS[2] += pla1VEL[2] * DT;
+    Object1.position[0] += Object1.velocity[0] * DT;
+    Object1.position[1] += Object1.velocity[1] * DT;
+    Object1.position[2] += Object1.velocity[2] * DT;
 
-    pla2POS[0] += pla2VEL[0] * DT;
-    pla2POS[1] += pla2VEL[1] * DT;
-    pla2POS[2] += pla2VEL[2] * DT;
- 
-    
+    Object2.position[0] += Object2.velocity[0] * DT;
+    Object2.position[1] += Object2.velocity[1] * DT;
+    Object2.position[2] += Object2.velocity[2] * DT;
+}
+
+bool CollisionDet(Object& Object1, Object& Object2) {
+    double Distance = GetDis(Object1.position, Object2.position);
+    bool Collision = false;
+
+    if (Distance <= (Object1.radius + Object2.radius)) {
+        std::cout << "Collision" << std::endl;
+        Object1.velocity = {0.0f, 0.0f, 0.0f};
+        Object2.velocity = {0.0f, 0.0f, 0.0f};
+        Collision = true;
+    }
+    return Collision;
 }
