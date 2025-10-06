@@ -258,7 +258,7 @@ int main() {
     Planet1.position[2] = 1520.0;
     Planet1.velocity[0] = 0.0;
     Planet1.velocity[1] = 0.0;
-    Planet1.velocity[2] = -2.0;
+    Planet1.velocity[2] = -4.0;
 
     Object Planet2;
     Planet2.name = "Planet2";
@@ -275,9 +275,9 @@ int main() {
     Planet3.name = "Planet3";
     Planet3.radius = 3.0;
     Planet3.mass = 2e7;
-    Planet3.position[0] = 1450.0;
+    Planet3.position[0] = 1400.0;
     Planet3.position[1] = 0.0;
-    Planet3.position[2] = 1450.0;
+    Planet3.position[2] = 1400.0;
     Planet3.velocity[0] = 0.0;
     Planet3.velocity[1] = 0.0;
     Planet3.velocity[2] = 0.0;
@@ -313,9 +313,9 @@ int main() {
         glUniform3f(colorLoc, 1.0f, 1.0f, 0.0f);
         Planet3.drawObject();
 
-        Collision = CollisionDet(Planet1, Planet2);
-        Collision = CollisionDet(Planet1, Planet3);
-        Collision = CollisionDet(Planet2, Planet3);
+        if (CollisionDet(Planet1, Planet2) || CollisionDet(Planet1, Planet3) || CollisionDet(Planet2, Planet3)) {
+            Collision = true;
+        }
 
         if (!Collision) {
             PhysicsProcess(Planet1, Planet2, DT);
