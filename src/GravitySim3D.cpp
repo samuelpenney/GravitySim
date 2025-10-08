@@ -156,7 +156,32 @@ Camera camera(glm::vec3(500.0f, 20.0f, 500.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
+bool paused = false;
+bool spacePressedLastFrame = false;
+bool cursorInWindow = true;
+bool zPressedLastFrame = false;
+
 void processInput(GLFWwindow* window) {
+    bool spacePressed = (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS);
+    if (spacePressed && !spacePressedLastFrame) {
+        paused = !paused;
+        std::cout << (paused ? "Simulation paused\n" : "Simulation resumed\n");
+    }
+    spacePressedLastFrame = spacePressed;
+
+    bool zPressed = (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS);
+    if (zPressed && !zPressedLastFrame) {
+        cursorInWindow = !cursorInWindow;
+        if (cursorInWindow) {
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+            std::cout << "Cursor in window" << std::endl;
+        } else {
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+            std::cout << "Cursor out of window" << std::endl;
+        } 
+    }
+    zPressedLastFrame = zPressed;
+
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
         camera.ProcessKeyboard(GLFW_KEY_W, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
@@ -181,6 +206,11 @@ void processInput(GLFWwindow* window) {
 void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
     static float lastX = 800.0f, lastY = 450.0f;
     static bool firstMouse = true;
+
+    if (!cursorInWindow) {
+        firstMouse = true;
+        return;
+    }
 
     if (firstMouse) {
         lastX = xpos;
@@ -259,11 +289,11 @@ int main() {
     Object Planet1;
     Planet1.name = "Planet1";
     Planet1.radius = 2.0;
-    Planet1.mass = 5e6;
-    Planet1.position[0] = 525.0;
+    Planet1.mass = 1e6;
+    Planet1.position[0] = 550.0;
     Planet1.position[1] = 0.0;
-    Planet1.position[2] = 525.0;
-    Planet1.velocity[0] = -2.05;
+    Planet1.position[2] = 530.0;
+    Planet1.velocity[0] = 0.0;
     Planet1.velocity[1] = 0.0;
     Planet1.velocity[2] = 0.0;
 
@@ -281,11 +311,11 @@ int main() {
     Object Planet3;
     Planet3.name = "Planet3";
     Planet3.radius = 2.0;
-    Planet3.mass = 5e6;
-    Planet3.position[0] = 525.0;
+    Planet3.mass = 9e6;
+    Planet3.position[0] = 500.0;
     Planet3.position[1] = 0.0;
-    Planet3.position[2] = 475.0;
-    Planet3.velocity[0] = 2.05;
+    Planet3.position[2] = 470.0;
+    Planet3.velocity[0] = 0.0;
     Planet3.velocity[1] = 0.0;
     Planet3.velocity[2] = 0.0;
 
@@ -324,7 +354,8 @@ int main() {
             Collision = true;
         }
 
-        if (!Collision) {
+
+        if (!paused && !Collision) {
             PhysicsProcess(Planet1, Planet2, DT);
             PhysicsProcess(Planet1, Planet3, DT);
             PhysicsProcess(Planet2, Planet3, DT);

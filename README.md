@@ -1,6 +1,6 @@
 # GravitySim
 
-Starting to work on a gravity simulator. Shows how velocity and mass affects the rotation period of two bodies/planets
+Starting to work on a gravity simulator. Shows how velocity and mass affects the rotation period of two bodies/planets and how mass distorts space time with the grid
 
 ## How to Run
 
@@ -29,3 +29,9 @@ Starting to work on a gravity simulator. Shows how velocity and mass affects the
 
 ### Notes
 - To switch between a 3D view and 2D view, update both `launch.json` and `tasks.json` accordingly.
+- Press 'esc' to leave simulation
+- Press 'space' to pause the simulation
+- Press 'z' to let the mouse exit the simulation just if you want to move the window
+
+### Units and scaling
+This simulation uses scaled units to keep numeric values reasonable and the simulation stable and visible. `GravConst` (G) is intentionally adjusted in the code; masses and distances in the examples are scaled and do not directly map to SI units unless you re-scale G, masses, and distances consistently.
