@@ -1,6 +1,6 @@
 # GravitySim
 
-Starting to work on a gravity simulator. Shows how velocity and mass affects the rotation period of two bodies/planets and how mass distorts space time with the grid
+This is a gravity simulator that I worked on my first semester of my sophomore year of college. Shows how velocity and mass affects the rotation period of two or more bodies/planets and how mass distorts space time with a grid.
 
 ## How to Run
 

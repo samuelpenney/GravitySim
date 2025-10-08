@@ -12,7 +12,7 @@ float SW = 1600.0f;
 float SH = 900.0f;
 const double GravConst = 6.674e-5; // Raised to speed up sim at 5
 const double PI = 3.14159265358979323846;
-const long LIGHT_SPEED = 299792458;
+const double LIGHT_SPEED = 299792458.0;
 int stacks = 50;
 int slices = 50;
 bool Collision = false;
@@ -271,7 +271,6 @@ struct GridVertex {
 
 double GetDis(const std::vector<double>& pos1, const std::vector<double>& pos2);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
-void DrawGrid(int GridSize, GLuint colorLoc);
 void PhysicsProcess(Object& Object1, Object& Object2, double DT);
 bool CollisionDet(Object& Object1, Object& Object2);
 void DrawCurvedGrid(int GridSize, GLuint colorLoc, const std::vector<Object*>& objects);
@@ -288,12 +287,12 @@ int main() {
 
     Object Planet1;
     Planet1.name = "Planet1";
-    Planet1.radius = 2.0;
+    Planet1.radius = 1.0;
     Planet1.mass = 1e6;
     Planet1.position[0] = 550.0;
     Planet1.position[1] = 0.0;
     Planet1.position[2] = 530.0;
-    Planet1.velocity[0] = 0.0;
+    Planet1.velocity[0] = -5.0;
     Planet1.velocity[1] = 0.0;
     Planet1.velocity[2] = 0.0;
 
@@ -304,17 +303,17 @@ int main() {
     Planet2.position[0] = 525.0;
     Planet2.position[1] = 0.0;
     Planet2.position[2] = 500.0;
-    Planet2.velocity[0] = 0.0;
+    Planet2.velocity[0] = -2.0;
     Planet2.velocity[1] = 0.0;
     Planet2.velocity[2] = 0.0;
 
     Object Planet3;
     Planet3.name = "Planet3";
-    Planet3.radius = 2.0;
+    Planet3.radius = 3.0;
     Planet3.mass = 9e6;
-    Planet3.position[0] = 500.0;
+    Planet3.position[0] = 450.0;
     Planet3.position[1] = 0.0;
-    Planet3.position[2] = 470.0;
+    Planet3.position[2] = 450.0;
     Planet3.velocity[0] = 0.0;
     Planet3.velocity[1] = 0.0;
     Planet3.velocity[2] = 0.0;
@@ -341,7 +340,7 @@ int main() {
         glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
         GLuint colorLoc = glGetUniformLocation(shaderProgram, "color");
         std::vector<Object*> objects = {&Planet1, &Planet2, &Planet3};
-        DrawCurvedGrid(5.0f, colorLoc, objects);
+        DrawCurvedGrid(4.0f, colorLoc, objects);
 
         glUniform3f(colorLoc, 1.0f, 0.0f, 0.0f);
         Planet1.drawObject();
@@ -413,24 +412,6 @@ double GetDis(const std::vector<double>& pos1, const std::vector<double>& pos2) 
     double dy = pos2[1] - pos1[1];
     double dz = pos2[2] - pos1[2];
     return std::sqrt(dx * dx + dy * dy + dz * dz);
-}
-
-void DrawGrid(int GridSize, GLuint colorLoc) {
-    glBegin(GL_LINES);
-    glUniform3f(colorLoc, 0.3f, 0.3f, 0.3f);
-
-    for (int x = 0; x <= 3000; x += GridSize) {
-        glVertex3f(x, 0.0f, 0.0f);
-        glVertex3f(x, 0.0f, 3000);
-    }
-
-    for (int z = 0; z < 3000; z += GridSize) {
-        glVertex3f(0.0f, 0.0f, z);
-        glVertex3f(3000, 0.0f, z);
-    }
-
-    glEnd();
-
 }
 
 void PhysicsProcess(Object& Object1, Object& Object2, double DT) {
