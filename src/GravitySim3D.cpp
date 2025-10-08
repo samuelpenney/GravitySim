@@ -10,12 +10,12 @@
 
 float SW = 1600.0f;
 float SH = 900.0f;
-const double GravConst = 6.674e-5; // Raised to speed up sim
+const double GravConst = 6.674e-5; // Raised to speed up sim at 5
 const double PI = 3.14159265358979323846;
+const long LIGHT_SPEED = 299792458;
 int stacks = 50;
 int slices = 50;
 bool Collision = false;
-
 
 const char* vertexShaderSource = R"glsl(
     #version 330 core
@@ -152,7 +152,7 @@ private:
     }
 };
 
-Camera camera(glm::vec3(1500.0f, 20.0f, 1500.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 0.0f);
+Camera camera(glm::vec3(500.0f, 20.0f, 500.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 0.0f);
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
@@ -235,11 +235,18 @@ public:
 
 };
 
+struct GridVertex {
+    float x, y, z;
+};
+
 double GetDis(const std::vector<double>& pos1, const std::vector<double>& pos2);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
-void DrawGrid(int GridSize, int CellSize, GLuint colorLoc);
+void DrawGrid(int GridSize, GLuint colorLoc);
 void PhysicsProcess(Object& Object1, Object& Object2, double DT);
 bool CollisionDet(Object& Object1, Object& Object2);
+void DrawCurvedGrid(int GridSize, GLuint colorLoc, const std::vector<Object*>& objects);
+double CalCurve(double potential);
+double CalGravPot(double x, double z, const std::vector<Object*>& objects);
 
 int main() {
     GLFWwindow* window = StartGLFW();
@@ -251,34 +258,34 @@ int main() {
 
     Object Planet1;
     Planet1.name = "Planet1";
-    Planet1.radius = 1.0;
-    Planet1.mass = 1e6;
-    Planet1.position[0] = 1520.0;
+    Planet1.radius = 2.0;
+    Planet1.mass = 5e6;
+    Planet1.position[0] = 525.0;
     Planet1.position[1] = 0.0;
-    Planet1.position[2] = 1520.0;
-    Planet1.velocity[0] = 0.0;
+    Planet1.position[2] = 525.0;
+    Planet1.velocity[0] = -2.05;
     Planet1.velocity[1] = 0.0;
-    Planet1.velocity[2] = -4.0;
+    Planet1.velocity[2] = 0.0;
 
     Object Planet2;
     Planet2.name = "Planet2";
     Planet2.radius = 2.0;
     Planet2.mass = 5e6;
-    Planet2.position[0] = 1500.0;
+    Planet2.position[0] = 525.0;
     Planet2.position[1] = 0.0;
-    Planet2.position[2] = 1500.0;
+    Planet2.position[2] = 500.0;
     Planet2.velocity[0] = 0.0;
     Planet2.velocity[1] = 0.0;
-    Planet2.velocity[2] = -1.0;
+    Planet2.velocity[2] = 0.0;
 
     Object Planet3;
     Planet3.name = "Planet3";
-    Planet3.radius = 3.0;
-    Planet3.mass = 2e7;
-    Planet3.position[0] = 1400.0;
+    Planet3.radius = 2.0;
+    Planet3.mass = 5e6;
+    Planet3.position[0] = 525.0;
     Planet3.position[1] = 0.0;
-    Planet3.position[2] = 1400.0;
-    Planet3.velocity[0] = 0.0;
+    Planet3.position[2] = 475.0;
+    Planet3.velocity[0] = 2.05;
     Planet3.velocity[1] = 0.0;
     Planet3.velocity[2] = 0.0;
 
@@ -303,8 +310,8 @@ int main() {
         glm::mat4 projection = glm::perspective(glm::radians(45.0f), SW / SH, 0.1f, 3000.0f); // Change last value for render distance if needed
         glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
         GLuint colorLoc = glGetUniformLocation(shaderProgram, "color");
-        glUniform3f(colorLoc, 0.3f, 0.3f, 0.3f);
-        DrawGrid(100, 100.0f, colorLoc);
+        std::vector<Object*> objects = {&Planet1, &Planet2, &Planet3};
+        DrawCurvedGrid(5.0f, colorLoc, objects);
 
         glUniform3f(colorLoc, 1.0f, 0.0f, 0.0f);
         Planet1.drawObject();
@@ -377,16 +384,16 @@ double GetDis(const std::vector<double>& pos1, const std::vector<double>& pos2) 
     return std::sqrt(dx * dx + dy * dy + dz * dz);
 }
 
-void DrawGrid(int GridSize, int CellSize, GLuint colorLoc) {
+void DrawGrid(int GridSize, GLuint colorLoc) {
     glBegin(GL_LINES);
     glUniform3f(colorLoc, 0.3f, 0.3f, 0.3f);
 
-    for (int x = 0; x <= 3000; x += CellSize) {
+    for (int x = 0; x <= 3000; x += GridSize) {
         glVertex3f(x, 0.0f, 0.0f);
         glVertex3f(x, 0.0f, 3000);
     }
 
-    for (int z = 0; z < 3000; z += CellSize) {
+    for (int z = 0; z < 3000; z += GridSize) {
         glVertex3f(0.0f, 0.0f, z);
         glVertex3f(3000, 0.0f, z);
     }
@@ -433,4 +440,51 @@ bool CollisionDet(Object& Object1, Object& Object2) {
         Collision = true;
     }
     return Collision;
+}
+
+double CalGravPot(double x, double z, const std::vector<Object*>& objects){
+    double potential = 0.0;
+
+    for (const auto& obj : objects) {
+        double dx = x - obj->position[0];
+        double dz = z - obj->position[2];
+        double distance = std::sqrt(dx * dx + dz * dz);
+
+        double softening = obj->radius * 3.5; // Change last value to increase or decrease curve of grid(less or more pointy)
+
+        double smoothedDist = std::sqrt(distance * distance + softening * softening);
+
+        double phi = -(GravConst * obj->mass) / smoothedDist;
+        potential += phi;
+    }
+
+    return potential;
+}
+
+double CalCurve(double potential) {
+    return potential * 0.5;
+}
+
+void DrawCurvedGrid(int GridSize, GLuint colorLoc, const std::vector<Object*>& objects) {
+    glUniform3f(colorLoc, 0.3f, 0.3f, 0.3f);
+
+    for (int z = 0; z <= 1000; z += GridSize) {
+        glBegin(GL_LINE_STRIP);
+        for (int x = 0; x <= 1000; x += GridSize / 4) {
+            double potential = CalGravPot(x, z, objects);
+            double y = CalCurve(potential);
+            glVertex3f(x, y, z);
+        }
+        glEnd();
+    }
+
+    for (int x = 0; x <= 1000; x+= GridSize) {
+        glBegin(GL_LINE_STRIP);
+        for (int z = 0; z <= 1000; z += GridSize / 4) {
+            double potential = CalGravPot(x, z, objects);
+            double y = CalCurve(potential);
+            glVertex3f(x,y,z);
+        }
+        glEnd();
+    }
 }
