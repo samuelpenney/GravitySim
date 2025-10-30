@@ -2,26 +2,38 @@
     "tasks": [
         {
             "type": "cppbuild",
-            "label": "C/C++: g++ build active file",
-            "command": "/usr/bin/g++",
+            "label": "C/C++: g++.exe build active file",
+            "command": "C:\\msys64\\ucrt64\\bin\\g++.exe",
             "args": [
                 "-fdiagnostics-color=always",
                 "-g",
-                "${file}",
+                "${workspaceFolder}\\src\\GravitySim3D.cpp",
                 "-o",
-                "${fileDirname}/${fileBasenameNoExtension}",
-                "-lglfw",
-                "-lGL",
-                "-lGLU",
-                "-lGLEW",
-                "-lX11",
-                "-lpthread",
-                "-lXrandr",
-                "-lXi",
-                "-ldl"
+                "${workspaceFolder}\\src\\GravitySim3D.exe",
+                "-lglfw3",
+                "-lopengl32",
+                "-lgdi32",
+                "-lglew32",
+                "-lglu32",
+                "-I",
+                "C:\\msys64\\ucrt64\\include",
+                "-L",
+                "C:\\msys64\\ucrt64\\lib",
+                "-I",
+                "C:\\msys64\\mingw64\\include",
+                "-L",
+                "C:\\msys64\\mingw64\\lib",
+                "-I",
+                "C:\\libs\\glew\\glew-2.1.0\\include\\GL",
+                "-L",
+                "C:\\libs\\glew\\glew-2.1.0\\include\\GL",
+                "-L",
+                "C:\\libs\\glew\\glew-2.1.0\\lib\\Release\\Win32",
+                "-I",
+                "C:\\libs\\glm"
             ],
             "options": {
-                "cwd": "${workspaceFolder}"
+                "cwd": "C:\\msys64\\ucrt64\\bin"
             },
             "problemMatcher": [
                 "$gcc"
@@ -30,64 +42,7 @@
                 "kind": "build",
                 "isDefault": true
             },
-            "detail": "/usr/bin/g++"
-        },
-        {
-            "type": "cppbuild",
-            "label": "C/C++: g++ build GravitySim3D",
-            "command": "/usr/bin/g++",
-            "args": [
-                "-fdiagnostics-color=always",
-                "-g",
-                "${workspaceFolder}/src/GravitySim3D.cpp",
-                "-o",
-                "${workspaceFolder}/src/GravitySim3D",
-                "-lglfw",
-                "-lGL",
-                "-lGLU",
-                "-lGLEW",
-                "-lX11",
-                "-lpthread",
-                "-lXrandr",
-                "-lXi",
-                "-ldl"
-            ],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            },
-            "problemMatcher": [
-                "$gcc"
-            ],
-            "group": "build",
-            "detail": "/usr/bin/g++"
-        },
-        {
-            "type": "cppbuild",
-            "label": "C/C++: g++ build GravitySim",
-            "command": "/usr/bin/g++",
-            "args": [
-                "-fdiagnostics-color=always",
-                "-g",
-                "${workspaceFolder}/src/GravitySim.cpp",
-                "-o",
-                "${workspaceFolder}/src/GravitySim",
-                "-lglfw",
-                "-lGL",
-                "-lGLU",
-                "-lX11",
-                "-lpthread",
-                "-lXrandr",
-                "-lXi",
-                "-ldl"
-            ],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            },
-            "problemMatcher": [
-                "$gcc"
-            ],
-            "group": "build",
-            "detail": "/usr/bin/g++"
+            "detail": "C:\\msys64\\ucrt64\\bin\\g++.exe"
         }
     ],
     "version": "2.0.0"

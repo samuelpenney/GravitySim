@@ -1,120 +1,37 @@
-# GravitySim - Linux Version
+# GravitySim
 
-This is a gravity simulator that shows how velocity and mass affects the rotation period of two or more bodies/planets and how mass distorts space time with a grid. This version has been updated to run on Linux systems.
+This is a gravity simulator that I worked on my first semester of my sophomore year of college. Shows how velocity and mass affects the rotation period of two or more bodies/planets and how mass distorts space time with a grid.
 
-The project contains two gravity simulation programs:
-- **GravitySim**: A 2D gravity simulation 
-- **GravitySim3D**: A 3D gravity simulation with curved spacetime visualization
+## How to Run
 
-## Prerequisites
+### Prerequisites
+1. Install [MSYS2](https://www.msys2.org/).
+2. Install the following packages using the MSYS2 terminal:
+   ```bash
+   pacman -S mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-glfw mingw-w64-ucrt-x86_64-glew
+   ```
+3. Ensure the following libraries are available:
+   - GLFW
+   - GLEW
+   - OpenGL
 
-You need to install the following dependencies on Linux:
-
-```bash
-sudo apt update
-sudo apt install libglfw3-dev libglew-dev libglm-dev libgl1-mesa-dev libglu1-mesa-dev build-essential
-```
-
-For other distributions:
-- **Fedora/RHEL**: `sudo dnf install glfw-devel glew-devel glm-devel mesa-libGL-devel mesa-libGLU-devel`
-- **Arch Linux**: `sudo pacman -S glfw glew glm mesa`
-
-## Building
-
-### Using Makefile (Recommended)
-
-```bash
-# Build both simulations
-make all
-
-# Build only 3D simulation
-make 3d
-
-# Build only 2D simulation  
-make 2d
-
-# Clean build files
-make clean
-
-# Show help
-make help
-```
-
-### Using VS Code
-
+### Build Instructions
 1. Open the project in Visual Studio Code.
-2. Press `Ctrl+Shift+B` and select "C/C++: g++ build active file".
-3. Or choose "C/C++: g++ build GravitySim.cpp" for the 2D simulation.
+2. Ensure the `tasks.json` and `launch.json` files are correctly configured for your desired view (2D or 3D).
+3. Use the default build task:
+   - Press `Ctrl+Shift+B` and select "C/C++: g++.exe build active file".
 
-## Running
+### Run Instructions
+1. After building, navigate to the `src` directory.
+2. Run the appropriate executable:
+   - For 3D view: `GravitySim3D.exe`
+   - For 2D view: `GravitySim.exe`
 
-### 3D Gravity Simulation
-```bash
-./src/GravitySim3D
-```
+### Notes
+- To switch between a 3D view and 2D view, update both `launch.json` and `tasks.json` accordingly.
+- Press 'esc' to leave simulation
+- Press 'space' to pause the simulation
+- Press 'z' to let the mouse exit the simulation just if you want to move the window
 
-**Controls:**
-- `W/A/S/D`: Move camera
-- `Shift + W/A/S/D`: Move camera faster
-- `Mouse`: Look around
-- `Z`: Toggle cursor capture
-- `Space`: Pause/resume simulation
-- `Esc`: Exit
-
-### 2D Gravity Simulation
-```bash
-./src/GravitySim
-```
-
-This shows a simpler 2D view of gravitational interactions between objects.
-
-## Debugging
-
-To debug the programs in VS Code:
-
-1. Set breakpoints in VS Code
-2. Press `F5` or use the "Run and Debug" panel
-3. Choose either:
-   - "Debug GravitySim3D" 
-   - "Debug GravitySim"
-   - "Debug Active File"
-
-## Features
-
-### 3D Simulation Features
-- Real-time 3D visualization of gravitational bodies
-- Interactive camera with mouse and keyboard controls
-- Curved spacetime grid showing gravitational field distortion
-- Collision detection between objects
-- Pause/resume functionality
-
-### 2D Simulation Features  
-- Simple 2D orbital mechanics
-- Grid background for reference
-- Real-time physics calculation display
-
-## Units and Scaling
-
+### Units and scaling
 This simulation uses scaled units to keep numeric values reasonable and the simulation stable and visible. `GravConst` (G) is intentionally adjusted in the code; masses and distances in the examples are scaled and do not directly map to SI units unless you re-scale G, masses, and distances consistently.
-
-## Troubleshooting
-
-If you encounter compilation errors:
-
-1. Ensure all dependencies are installed
-2. Check that your graphics drivers support OpenGL
-3. Try running with software rendering: `LIBGL_ALWAYS_SOFTWARE=1 ./src/GravitySim3D`
-
-## Project Structure
-
-```
-LinuxBranch/
-├── .vscode/           # VS Code configuration files (Linux-compatible)
-├── src/
-│   ├── GravitySim.cpp     # 2D simulation source
-│   ├── GravitySim3D.cpp   # 3D simulation source
-│   ├── GravitySim         # 2D simulation executable
-│   └── GravitySim3D       # 3D simulation executable
-├── Makefile           # Build configuration for Linux
-└── README.md          # This file
-```
