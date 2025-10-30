@@ -1,0 +1,44 @@
+# Compiled executables
+src/GravitySim
+src/GravitySim3D
+
+# Windows binaries (shouldn't be in Linux branch)
+*.exe
+*.dll
+*.lib
+*.obj
+
+# Object files
+*.o
+*.so
+*.dylib
+
+# Debug files
+*.dSYM/
+*.su
+*.idb
+*.pdb
+
+# VS Code workspace settings (optional - you may want to keep some)
+.vscode/settings.json
+
+# Build directories
+build/
+bin/
+obj/
+
+# Temporary files
+*~
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Core dumps
+core.*
+
+# Valgrind output
+*.valgrind
+
+# gdb history
+.gdb_history
