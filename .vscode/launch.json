@@ -2,17 +2,69 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "g++ Debug",
+            "name": "Debug GravitySim3D",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}\\src\\GravitySim3D.exe",
+            "program": "${workspaceFolder}/src/GravitySim3D",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
             "externalConsole": false,
             "MIMode": "gdb",
-            "miDebuggerPath": "C:\\msys64\\ucrt64\\bin\\gdb.exe",
+            "miDebuggerPath": "/usr/bin/gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set Disassembly Flavor to Intel",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "C/C++: g++ build GravitySim3D"
+        },
+        {
+            "name": "Debug GravitySim",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/GravitySim",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "/usr/bin/gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set Disassembly Flavor to Intel",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "C/C++: g++ build GravitySim"
+        },
+        {
+            "name": "Debug Active File",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${fileDirname}/${fileBasenameNoExtension}",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "/usr/bin/gdb",
             "setupCommands": [
                 {
                     "description": "Enable pretty-printing for gdb",
@@ -20,14 +72,7 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "build",
-            "logging": {
-                "moduleLoad": true,
-                "trace": true,
-                "engineLogging": true,
-                "programOutput": true,
-                "exceptions": true
-            }
+            "preLaunchTask": "C/C++: g++ build active file"
         }
     ]
 }
