@@ -16,7 +16,7 @@ class Object {
         std::vector<double> velocity = {0.0f, 0.0f};
         
 };
-
+ 
 GLFWwindow* StartGLFW();
 void DrawCircle(float centerX, float centerY, float radius, int points);
 double GetDis(const std::vector<double>& pos1, const std::vector<double>& pos2);
@@ -143,6 +143,30 @@ void DrawGrid(int GridSize, int CellSize) {
     glEnd();
 }
 
+
+void PhysicsProcess(Object& Object1, Object& Object2, double deltaTime) {
+  double Distance = GetDis(Object1.position, Object2.position);
+
+  double force = (GravConst * (Object1.mass * Object2.mass)) / (Distance * Distance);
+
+  std::vector<double> forceVec{(Object2.position[0] - Object1.position[0]) / Distance, (Object2.position[1] - Object1.position[1]) / Distance};
+  forceVec[0] *= force;
+  forceVec[1] *= force;
+
+  Object1.velocity[0] += (forceVec[0] / Object1.mass) * deltaTime;
+  Object1.velocity[1] += (forceVec[1] / Object1.mass) * deltaTime;
+
+  Object2.velocity[0] += (forceVec[0] / Object2.mass) * deltaTime;
+  Object2.velocity[1] += (forceVec[1] / Object2.mass) * deltaTime;
+
+  Object1.position[0] += Object1.velocity[0] * deltaTime;
+  Object1.position[1] += Object1.velocity[1] * deltaTime;
+
+  Object2.position[0] += Object2.velocity[0] * deltaTime;
+  Object2.position[1] += Object2.velocity[1] * deltaTime;
+}
+
+/*
 void PhysicsProcess(std::vector<double>& P1_POS, std::vector<double>& P1_VEL, double P1_MASS, std::vector<double>& P2_POS, std::vector<double>& P2_VEL, double P2_MASS, double deltaTime) {
     double Distance = GetDis(P1_POS, P2_POS);
 
@@ -165,3 +189,6 @@ void PhysicsProcess(std::vector<double>& P1_POS, std::vector<double>& P1_VEL, do
     P2_POS[1] += P2_VEL[1] * deltaTime;
 
 }
+*/
+
+// Finish

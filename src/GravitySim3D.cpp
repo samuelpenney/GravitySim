@@ -1,6 +1,7 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <GL/glu.h>
+#include <GL/glut.h>
 #include <iostream>
 #include <vector>
 #include <cmath>
@@ -16,6 +17,7 @@ const double LIGHT_SPEED = 299792458.0;
 int stacks = 50;
 int slices = 50;
 bool Collision = false;
+bool ifcol = false;
 
 const char* vertexShaderSource = R"glsl(
     #version 330 core
@@ -234,6 +236,8 @@ public:
     double mass;
     std::vector<double> position = {0.0f, 0.0f, 0.0f};
     std::vector<double> velocity = {0.0f, 0.0f, 0.0f};
+    std::vector<std::vector<double>> positionHistory; // Store history of positions
+    int maxHistorySize = 250; // Limit trail length
 
     void drawObject() {
         for (int i = 0; i <= stacks; ++i) {
@@ -263,6 +267,58 @@ public:
         }
     }
 
+    void drawPastPOS() {
+        drawLINE();
+    }
+    
+    void drawLabel(const glm::mat4& view, const glm::mat4& projection) {
+        // Save current matrices
+        glMatrixMode(GL_PROJECTION);
+        glPushMatrix();
+        glLoadMatrixf(glm::value_ptr(projection));
+        
+        glMatrixMode(GL_MODELVIEW);
+        glPushMatrix();
+        glLoadMatrixf(glm::value_ptr(view));
+        
+        // Position text above the planet
+        glRasterPos3f(position[0], position[1] + radius + 2.0, position[2]);
+        
+        // Draw each character
+        for (char c : name) {
+            glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, c);
+        }
+        
+        // Restore matrices
+        glPopMatrix();
+        glMatrixMode(GL_PROJECTION);
+        glPopMatrix();
+        glMatrixMode(GL_MODELVIEW);
+    }
+    
+    void updatePositionHistory() {
+        // Add current position to history
+        std::vector<double> currentPos = {position[0], position[1], position[2]};
+        positionHistory.push_back(currentPos);
+        
+        // Keep history size limited
+        if (positionHistory.size() > maxHistorySize) {
+            positionHistory.erase(positionHistory.begin());
+        }
+    }
+
+private:
+
+    void drawLINE() {
+        if (positionHistory.size() < 2) return; // Need at least 2 points to draw a line
+        
+        glBegin(GL_LINE_STRIP);
+        for (const auto& pos : positionHistory) {
+            glVertex3d(pos[0], pos[1], pos[2]);
+        }
+        glEnd();
+    }
+
 };
 
 struct GridVertex {
@@ -276,6 +332,7 @@ bool CollisionDet(Object& Object1, Object& Object2);
 void DrawCurvedGrid(int GridSize, GLuint colorLoc, const std::vector<Object*>& objects);
 double CalCurve(double potential);
 double CalGravPot(double x, double z, const std::vector<Object*>& objects);
+void StationPlanetPhysics(Object& Object1, Object& Object2, double DT);
 
 int main() {
     GLFWwindow* window = StartGLFW();
@@ -284,39 +341,32 @@ int main() {
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     glEnable(GL_DEPTH_TEST);
+    
+    // Initialize GLUT for text rendering
+    int argc = 0;
+    char** argv = nullptr;
+    glutInit(&argc, argv);
 
     Object Planet1;
     Planet1.name = "Planet1";
     Planet1.radius = 1.0;
     Planet1.mass = 1e6;
-    Planet1.position[0] = 550.0;
-    Planet1.position[1] = 0.0;
-    Planet1.position[2] = 530.0;
-    Planet1.velocity[0] = -5.0;
-    Planet1.velocity[1] = 0.0;
-    Planet1.velocity[2] = 0.0;
+    Planet1.position = {550.0f, 0.0f, 530.0f};
+    Planet1.velocity = {-5.0f, 0.0f, 0.0f};
 
     Object Planet2;
     Planet2.name = "Planet2";
     Planet2.radius = 2.0;
     Planet2.mass = 5e6;
-    Planet2.position[0] = 525.0;
-    Planet2.position[1] = 0.0;
-    Planet2.position[2] = 500.0;
-    Planet2.velocity[0] = -2.0;
-    Planet2.velocity[1] = 0.0;
-    Planet2.velocity[2] = 0.0;
+    Planet2.position = {525.0f, 0.0f, 500.0f};
+    Planet2.velocity = {-2.0f, 0.0f, 0.0f};
 
     Object Planet3;
     Planet3.name = "Planet3";
     Planet3.radius = 3.0;
-    Planet3.mass = 9e6;
-    Planet3.position[0] = 450.0;
-    Planet3.position[1] = 0.0;
-    Planet3.position[2] = 450.0;
-    Planet3.velocity[0] = 0.0;
-    Planet3.velocity[1] = 0.0;
-    Planet3.velocity[2] = 0.0;
+    Planet3.mass = 9e7;
+    Planet3.position = {450.0f, 0.0f, 450.0f};
+    Planet3.velocity = {0.0f, 0.0f, 0.0f};
 
     double prevTime = glfwGetTime();
 
@@ -344,22 +394,46 @@ int main() {
 
         glUniform3f(colorLoc, 1.0f, 0.0f, 0.0f);
         Planet1.drawObject();
+        Planet1.drawPastPOS();
         glUniform3f(colorLoc, 0.0f, 1.0f, 0.0f);
         Planet2.drawObject();
+        Planet2.drawPastPOS();
         glUniform3f(colorLoc, 1.0f, 1.0f, 0.0f);
         Planet3.drawObject();
+        Planet3.drawPastPOS();
+        
+        // Draw labels (disable shader for text rendering)
+        glUseProgram(0);
+        glColor3f(1.0f, 1.0f, 1.0f); // White text
+        Planet1.drawLabel(camera.GetViewMatrix(), projection);
+        Planet2.drawLabel(camera.GetViewMatrix(), projection);
+        Planet3.drawLabel(camera.GetViewMatrix(), projection);
+        glUseProgram(shaderProgram); // Re-enable shader
 
         if (CollisionDet(Planet1, Planet2) || CollisionDet(Planet1, Planet3) || CollisionDet(Planet2, Planet3)) {
             Collision = true;
         }
 
-
+    
         if (!paused && !Collision) {
             PhysicsProcess(Planet1, Planet2, DT);
             PhysicsProcess(Planet1, Planet3, DT);
             PhysicsProcess(Planet2, Planet3, DT);
+            
+            // Update position history for trails
+            Planet1.updatePositionHistory();
+            Planet2.updatePositionHistory();
+            Planet3.updatePositionHistory();
         } 
+        
 
+        /*
+        if (!paused && !Collision) {
+            PhysicsProcess(Planet1, Planet2, DT);
+            StationPlanetPhysics(Planet1, Planet3, DT);
+            StationPlanetPhysics(Planet2, Planet3, DT);
+        }
+        */
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
@@ -414,6 +488,28 @@ double GetDis(const std::vector<double>& pos1, const std::vector<double>& pos2) 
     return std::sqrt(dx * dx + dy * dy + dz * dz);
 }
 
+void StationPlanetPhysics(Object& Object1, Object& Object2, double DT) {
+    double Distance = GetDis(Object1.position, Object2.position);
+
+    double force = (GravConst * (Object1.mass * Object2.mass)) / (Distance * Distance);
+
+    std::vector<double> forceVec = {(Object2.position[0] - Object1.position[0]) / Distance, (Object2.position[1] - Object1.position[1]) / Distance, (Object2.position[2] - Object1.position[2]) / Distance};
+
+    Object1.velocity[0] += (forceVec[0] / Object1.mass) * DT;
+    Object1.velocity[1] += (forceVec[1] / Object1.mass) * DT;
+    Object1.velocity[2] += (forceVec[2] / Object1.mass) * DT;
+
+    Object2.velocity[0] += (forceVec[0] / Object2.mass) * DT;
+    Object2.velocity[1] += (forceVec[1] / Object2.mass) * DT;
+    Object2.velocity[2] += (forceVec[2] / Object2.mass) * DT;
+
+    Object1.position[0] += Object1.velocity[0] * DT;
+    Object1.position[1] += Object1.velocity[1] * DT;
+    Object1.position[2] += Object1.velocity[2] * DT;
+
+}
+
+
 void PhysicsProcess(Object& Object1, Object& Object2, double DT) {
     double Distance = GetDis(Object1.position, Object2.position);
 
@@ -446,10 +542,15 @@ bool CollisionDet(Object& Object1, Object& Object2) {
     bool Collision = false;
 
     if (Distance <= (Object1.radius + Object2.radius)) {
-        std::cout << "Collision between " << Object1.name << " and " << Object2.name << std::endl;
+        if (!ifcol) {
+            std::cout << "Collision between " << Object1.name << " and " << Object2.name << std::endl;
+            ifcol = true;
+        }
+        //std::cout << "Collision between " << Object1.name << " and " << Object2.name << std::endl;
         Object1.velocity = {0.0f, 0.0f, 0.0f};
         Object2.velocity = {0.0f, 0.0f, 0.0f};
         Collision = true;
+
     }
     return Collision;
 }
