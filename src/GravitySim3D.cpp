@@ -1,6 +1,7 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-#include <GL/glu.h>
+#include <OpenGL/glu.h>
+//#include <GL/glu.h>
 #include <iostream>
 #include <vector>
 #include <cmath>
@@ -18,8 +19,8 @@ int slices = 50;
 bool Collision = false;
 
 const char* vertexShaderSource = R"glsl(
-    #version 330 core
-    layout (location = 0) in vec3 aPos;
+    #version 120
+    attribute vec3 aPos;
 
     uniform mat4 view;
     uniform mat4 projection; // Add projection matrix uniform
@@ -30,13 +31,12 @@ const char* vertexShaderSource = R"glsl(
 )glsl";
 
 const char* fragmentShaderSource = R"glsl(
-    #version 330 core
-    out vec4 FragColor;
+    #version 120
 
     uniform vec3 color; // Add color uniform
 
     void main() {
-        FragColor = vec4(color, 1.0); // Use the color uniform
+        gl_FragColor = vec4(color, 1.0); // Use the color uniform
     }
 )glsl";
 
@@ -374,6 +374,10 @@ GLFWwindow* StartGLFW(){
         std::cerr << "Failed to initialize GLFW. Exiting..." << std::endl;
         exit(EXIT_FAILURE);
     }
+
+    // Use OpenGL 2.1 compatibility profile for immediate mode rendering
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
 
     GLFWwindow* window = glfwCreateWindow(1600, 900, "Gravity Sim", NULL, NULL);
     if (!window) {

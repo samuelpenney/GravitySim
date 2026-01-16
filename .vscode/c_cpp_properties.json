@@ -1,20 +1,17 @@
 {
     "configurations": [
         {
-            "name": "Win32",
+            "name": "Mac",
             "includePath": [
                 "${workspaceFolder}/**",
-                "C:/msys64/ucrt64/include"
+                "/opt/homebrew/include"
             ],
-            "defines": [
-                "_DEBUG",
-                "UNICODE",
-                "_UNICODE"
-            ],
-            "compilerPath": "C:/msys64/ucrt64/bin/g++.exe",
+            "defines": [],
+            "macFrameworkPath": ["/System/Library/Frameworks", "/Library/Frameworks"],
+            "compilerPath": "/usr/bin/clang++",
             "cStandard": "c11",
             "cppStandard": "c++17",
-            "intelliSenseMode": "windows-gcc-x64"
+            "intelliSenseMode": "macos-clang-arm64"
         }
     ],
     "version": 4
