@@ -1,13 +1,14 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <OpenGL/glu.h>
-//#include <GL/glu.h>
+#include <GL/glut.h>
 #include <iostream>
 #include <vector>
 #include <cmath>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <random>
 
 float SW = 1600.0f;
 float SH = 900.0f;
@@ -17,7 +18,44 @@ const double LIGHT_SPEED = 299792458.0;
 int stacks = 50;
 int slices = 50;
 bool Collision = false;
-
+bool ifcol = false;
+std::vector<std::vector<float>> colorPalette = {
+    {0.2f, 0.0f, 0.0f},
+    {0.4f, 0.0f, 0.0f},
+    {0.6f, 0.0f, 0.0f},
+    {0.8f, 0.0f, 0.0f},
+    {1.0f, 0.0f, 0.0f},
+    {0.0f, 0.2f, 0.0f},
+    {0.0f, 0.4f, 0.0f},
+    {0.0f, 0.6f, 0.0f},
+    {0.0f, 0.8f, 0.0f},
+    {0.0f, 1.0f, 0.0f},
+    {0.0f, 0.0f, 0.2f},
+    {0.0f, 0.0f, 0.4f},
+    {0.0f, 0.0f, 0.6f},
+    {0.0f, 0.0f, 0.8f},
+    {0.0f, 0.0f, 1.0f},
+    {0.2f, 0.2f, 0.0f},
+    {0.4f, 0.4f, 0.0f},
+    {0.6f, 0.6f, 0.0f},
+    {0.8f, 0.8f, 0.0f},
+    {1.0f, 1.0f, 0.0f},
+    {0.2f, 0.0f, 0.2f},
+    {0.4f, 0.0f, 0.4f},
+    {0.6f, 0.0f, 0.6f},
+    {0.8f, 0.0f, 0.8f},
+    {1.0f, 0.0f, 1.0f},
+    {0.0f, 0.2f, 0.2f},
+    {0.0f, 0.4f, 0.4f},
+    {0.0f, 0.6f, 0.6f},
+    {0.0f, 0.8f, 0.8f},
+    {0.0f, 1.0f, 1.0f},
+    {0.2f, 0.2f, 0.2f},
+    {0.4f, 0.4f, 0.4f},
+    {0.6f, 0.6f, 0.6f},
+    {0.8f, 0.8f, 0.8f},
+    {1.0f, 1.0f, 1.0f}
+};
 const char* vertexShaderSource = R"glsl(
     #version 120
     attribute vec3 aPos;
@@ -234,6 +272,9 @@ public:
     double mass;
     std::vector<double> position = {0.0f, 0.0f, 0.0f};
     std::vector<double> velocity = {0.0f, 0.0f, 0.0f};
+    std::vector<std::vector<double>> positionHistory;
+    int maxHistorySize = 250;
+    int colorIndex = -1;
 
     void drawObject() {
         for (int i = 0; i <= stacks; ++i) {
@@ -263,6 +304,50 @@ public:
         }
     }
 
+    void drawPastPOS() {
+        drawLINE();
+    }
+
+    void drawLabel(const glm::mat4& view, const glm::mat4& projection) {
+        glMatrixMode(GL_PROJECTION);
+        glPushMatrix();
+        glLoadMatrixf(glm::value_ptr(projection));
+
+        glMatrixMode(GL_MODELVIEW);
+        glPushMatrix();
+        glLoadMatrixf(glm::value_ptr(view));
+
+        glRasterPos3f(position[0], position[1] + radius + 2.0, position[2]);
+
+        for (char c : name) {
+            glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, c);
+        }
+
+        glPopMatrix();
+        glMatrixMode(GL_PROJECTION);
+        glPopMatrix();
+        glMatrixMode(GL_MODELVIEW);
+    }
+
+    void updatePositionHistory() {
+        std::vector<double> currentPos = {position[0], position[1], position[2]};
+        positionHistory.push_back(currentPos);
+
+        if (positionHistory.size() > maxHistorySize) {
+            positionHistory.erase(positionHistory.begin());
+        }
+    }
+
+private:
+    void drawLINE() {
+        if (positionHistory.size() < 2) return;
+
+        glBegin(GL_LINE_STRIP);
+        for (const auto& pos : positionHistory) {
+            glVertex3f(pos[0], pos[1], pos[2]);
+        }
+        glEnd();
+    }
 };
 
 struct GridVertex {
@@ -276,6 +361,8 @@ bool CollisionDet(Object& Object1, Object& Object2);
 void DrawCurvedGrid(int GridSize, GLuint colorLoc, const std::vector<Object*>& objects);
 double CalCurve(double potential);
 double CalGravPot(double x, double z, const std::vector<Object*>& objects);
+bool CollisionDetection(const std::vector<Object*>& objects);
+void Process(std::vector<Object*>& objects, GLuint colorLoc, glm::mat4 projection, GLuint shaderProgram, double DT);
 
 int main() {
     GLFWwindow* window = StartGLFW();
@@ -284,39 +371,37 @@ int main() {
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     glEnable(GL_DEPTH_TEST);
-
+    /*
+    int argc = 0;
+    char** argv = nullptr;
+    glutInit(&argc, argv);
+    */
     Object Planet1;
     Planet1.name = "Planet1";
     Planet1.radius = 1.0;
     Planet1.mass = 1e6;
-    Planet1.position[0] = 550.0;
-    Planet1.position[1] = 0.0;
-    Planet1.position[2] = 530.0;
-    Planet1.velocity[0] = -5.0;
-    Planet1.velocity[1] = 0.0;
-    Planet1.velocity[2] = 0.0;
+    Planet1.position = {550.0f, 0.0f, 530.0f};
+    Planet1.velocity = {-4.7f, 0.0f, 0.0f};
 
     Object Planet2;
     Planet2.name = "Planet2";
     Planet2.radius = 2.0;
     Planet2.mass = 5e6;
-    Planet2.position[0] = 525.0;
-    Planet2.position[1] = 0.0;
-    Planet2.position[2] = 500.0;
-    Planet2.velocity[0] = -2.0;
-    Planet2.velocity[1] = 0.0;
-    Planet2.velocity[2] = 0.0;
+    Planet2.position = {525.0f, 0.0f, 500.0f};
+    Planet2.velocity = {-2.0f, 0.0f, 0.0f};
 
     Object Planet3;
     Planet3.name = "Planet3";
     Planet3.radius = 3.0;
-    Planet3.mass = 9e6;
-    Planet3.position[0] = 450.0;
-    Planet3.position[1] = 0.0;
-    Planet3.position[2] = 450.0;
-    Planet3.velocity[0] = 0.0;
-    Planet3.velocity[1] = 0.0;
-    Planet3.velocity[2] = 0.0;
+    Planet3.mass = 1e7;
+    Planet3.position = {450.0f, 0.0f, 450.0f};
+    Planet3.velocity = {0.5f, 0.0f, 0.0f};
+
+    Object Planet4;
+    Planet4.name = "Planet4";
+    Planet4.radius = 4.0;
+    Planet4.mass = 2e7;
+    Planet4.position = {370.0f, 0.0f, 370.0f};
 
     double prevTime = glfwGetTime();
 
@@ -339,26 +424,9 @@ int main() {
         glm::mat4 projection = glm::perspective(glm::radians(45.0f), SW / SH, 0.1f, 3000.0f); // Change last value for render distance if needed
         glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
         GLuint colorLoc = glGetUniformLocation(shaderProgram, "color");
-        std::vector<Object*> objects = {&Planet1, &Planet2, &Planet3};
-        DrawCurvedGrid(4.0f, colorLoc, objects);
 
-        glUniform3f(colorLoc, 1.0f, 0.0f, 0.0f);
-        Planet1.drawObject();
-        glUniform3f(colorLoc, 0.0f, 1.0f, 0.0f);
-        Planet2.drawObject();
-        glUniform3f(colorLoc, 1.0f, 1.0f, 0.0f);
-        Planet3.drawObject();
-
-        if (CollisionDet(Planet1, Planet2) || CollisionDet(Planet1, Planet3) || CollisionDet(Planet2, Planet3)) {
-            Collision = true;
-        }
-
-
-        if (!paused && !Collision) {
-            PhysicsProcess(Planet1, Planet2, DT);
-            PhysicsProcess(Planet1, Planet3, DT);
-            PhysicsProcess(Planet2, Planet3, DT);
-        } 
+        std::vector<Object*> objects = {&Planet1, &Planet2, &Planet3, &Planet4};
+        Process(objects, colorLoc, projection, shaderProgram, DT);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -458,6 +526,26 @@ bool CollisionDet(Object& Object1, Object& Object2) {
     return Collision;
 }
 
+bool CollisionDetection(std::vector<Object*>& objects) {
+    int ObjectAmount = objects.size();
+    bool Collision = false;
+
+    for (int i = 0; i < ObjectAmount; i++) {
+        for (int j = i + 1; j < ObjectAmount; j++) {
+            double Distance = GetDis(objects[i]->position, objects[j]->position);
+            if (Distance <= (objects[i]->radius + objects[j]->radius)) {
+                if (!ifcol) {
+                    std::cout << "Collision between " << objects[i]->name << " and " << objects[j]->name << std::endl;
+                    ifcol = true;
+                }
+                Collision = true;
+                break;
+            }
+        }
+    }
+    return Collision;
+}
+
 double CalGravPot(double x, double z, const std::vector<Object*>& objects){
     double potential = 0.0;
 
@@ -502,5 +590,61 @@ void DrawCurvedGrid(int GridSize, GLuint colorLoc, const std::vector<Object*>& o
             glVertex3f(x,y,z);
         }
         glEnd();
+    }
+}
+
+void Process(std::vector<Object*>& objects, GLuint colorLoc, glm::mat4 projection, GLuint shaderProgram, double DT) {
+    static std::random_device rd;
+    static std::mt19937 gen(rd());
+    static std::vector<int> availableColors;
+
+    static bool initialized = false;
+    if (!initialized) {
+        for (int i = 0; i < colorPalette.size(); i++) {
+            availableColors.push_back(i);
+        }
+        initialized = true;
+    }
+
+    int ObjectAmount = objects.size();
+
+    for (int i = 0; i < ObjectAmount; i++) {
+        if (objects[i]->colorIndex == -1 && !availableColors.empty()) {
+            std::uniform_int_distribution<int> dis(0, availableColors.size() - 1);
+            int randomIdx = dis(gen);
+            objects[i]->colorIndex = availableColors[randomIdx];
+            availableColors.erase(availableColors.begin() + randomIdx);
+        }
+    }
+
+    DrawCurvedGrid(4.0f, colorLoc, objects);
+
+    for (int i = 0; i < ObjectAmount; i++) {
+        if (objects[i]->colorIndex != -1) {
+            glUniform3f(colorLoc, colorPalette[objects[i]->colorIndex][0], colorPalette[objects[i]->colorIndex][1], colorPalette[objects[i]->colorIndex][2]);
+
+        }
+        objects[i]->drawObject();
+        objects[i]->drawPastPOS();
+    }
+    /*
+    glUseProgram(0);
+    glColor3f(1.0f, 1.0f, 1.0f);
+    for (const auto& obj : objects) {
+        obj->drawLabel(camera.GetViewMatrix(), projection);
+    }
+    glUseProgram(shaderProgram);
+    */
+    Collision = CollisionDetection(objects);
+
+    if (!paused && !Collision) {
+        for (int i = 0; i < ObjectAmount; i++) {
+            for (int j = i + 1; j < ObjectAmount; j++) {
+                PhysicsProcess(*objects[i], *objects[j], DT);
+            }
+        }
+        for (int i = 0; i < ObjectAmount; i++) {
+            objects[i]->updatePositionHistory();
+        }
     }
 }

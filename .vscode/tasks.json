@@ -15,6 +15,7 @@
                 "-L/opt/homebrew/lib",
                 "-lglfw",
                 "-lGLEW",
+                "-lglut",
                 "-framework",
                 "OpenGL",
                 "-framework",
