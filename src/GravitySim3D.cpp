@@ -357,7 +357,6 @@ struct GridVertex {
 double GetDis(const std::vector<double>& pos1, const std::vector<double>& pos2);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void PhysicsProcess(Object& Object1, Object& Object2, double DT);
-bool CollisionDet(Object& Object1, Object& Object2);
 void DrawCurvedGrid(int GridSize, GLuint colorLoc, const std::vector<Object*>& objects);
 double CalCurve(double potential);
 double CalGravPot(double x, double z, const std::vector<Object*>& objects);
@@ -454,7 +453,13 @@ GLFWwindow* StartGLFW(){
         exit(EXIT_FAILURE);
     }
     glfwMakeContextCurrent(window);
-    glViewport(0, 0, 1600, 900);
+    
+    // Get actual framebuffer size (may differ from window size on high DPI displays)
+    int framebufferWidth, framebufferHeight;
+    glfwGetFramebufferSize(window, &framebufferWidth, &framebufferHeight);
+    SW = framebufferWidth;
+    SH = framebufferHeight;
+    glViewport(0, 0, framebufferWidth, framebufferHeight);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
     glMatrixMode(GL_PROJECTION);
@@ -473,6 +478,8 @@ GLFWwindow* StartGLFW(){
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
+    SW = width;
+    SH = height;
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     gluPerspective(45.0, (float)width / (float)height, 0.1, 100.0);
@@ -513,18 +520,6 @@ void PhysicsProcess(Object& Object1, Object& Object2, double DT) {
     Object2.position[2] += Object2.velocity[2] * DT;
 }
 
-bool CollisionDet(Object& Object1, Object& Object2) {
-    double Distance = GetDis(Object1.position, Object2.position);
-    bool Collision = false;
-
-    if (Distance <= (Object1.radius + Object2.radius)) {
-        std::cout << "Collision between " << Object1.name << " and " << Object2.name << std::endl;
-        Object1.velocity = {0.0f, 0.0f, 0.0f};
-        Object2.velocity = {0.0f, 0.0f, 0.0f};
-        Collision = true;
-    }
-    return Collision;
-}
 
 bool CollisionDetection(std::vector<Object*>& objects) {
     int ObjectAmount = objects.size();

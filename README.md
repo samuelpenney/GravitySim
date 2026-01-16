@@ -2,6 +2,13 @@
 
 This is a gravity simulator that I worked on my first semester of my sophomore year of college. Shows how velocity and mass affects the rotation period of two or more bodies/planets and how mass distorts space time with a grid.
 
+## To Do
+
+   - Fix text rendering
+   - Create a ui showing object attributes
+   - Add a way to add new objects
+
+
 ## How to Run
 
 ### Prerequisites
