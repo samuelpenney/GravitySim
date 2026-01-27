@@ -4,10 +4,14 @@
             "name": "Mac",
             "includePath": [
                 "${workspaceFolder}/**",
-                "/opt/homebrew/include"
+                "/opt/homebrew/include",
+                "/opt/homebrew/Cellar/freetype/2.14.1_1/include/freetype2"
             ],
             "defines": [],
-            "macFrameworkPath": ["/System/Library/Frameworks", "/Library/Frameworks"],
+            "macFrameworkPath": [
+                "/System/Library/Frameworks",
+                "/Library/Frameworks"
+            ],
             "compilerPath": "/usr/bin/clang++",
             "cStandard": "c11",
             "cppStandard": "c++17",

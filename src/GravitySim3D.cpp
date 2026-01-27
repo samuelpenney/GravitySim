@@ -9,6 +9,9 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <random>
+#include <ft2build.h>
+#include FT_FREETYPE_H
+
 
 float SW = 1600.0f;
 float SH = 900.0f;
@@ -370,11 +373,11 @@ int main() {
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     glEnable(GL_DEPTH_TEST);
-    /*
-    int argc = 0;
-    char** argv = nullptr;
-    glutInit(&argc, argv);
-    */
+    
+    //int argc = 0;
+    //char** argv = nullptr; ISSUE HERE
+    //glutInit(&argc, argv);
+    
     Object Planet1;
     Planet1.name = "Planet1";
     Planet1.radius = 1.0;
@@ -464,7 +467,8 @@ GLFWwindow* StartGLFW(){
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(45.0, SW / SH, 0.1, 100.0);
+    //gluPerspective(45.0, SW / SH, 0.1, 100.0);
+    glm::mat4 projection = glm::perspective(glm::radians(45.0f), SW/ SH, 0.1f, 100.0f);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
@@ -482,7 +486,8 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     SH = height;
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(45.0, (float)width / (float)height, 0.1, 100.0);
+    //gluPerspective(45.0, (float)width / (float)height, 0.1, 100.0);
+    glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)width / (float)height, 0.1f, 100.0f);
     glMatrixMode(GL_MODELVIEW);
 }
 
@@ -519,7 +524,6 @@ void PhysicsProcess(Object& Object1, Object& Object2, double DT) {
     Object2.position[1] += Object2.velocity[1] * DT;
     Object2.position[2] += Object2.velocity[2] * DT;
 }
-
 
 bool CollisionDetection(std::vector<Object*>& objects) {
     int ObjectAmount = objects.size();
@@ -622,6 +626,7 @@ void Process(std::vector<Object*>& objects, GLuint colorLoc, glm::mat4 projectio
         objects[i]->drawObject();
         objects[i]->drawPastPOS();
     }
+
     /*
     glUseProgram(0);
     glColor3f(1.0f, 1.0f, 1.0f);
@@ -630,6 +635,7 @@ void Process(std::vector<Object*>& objects, GLuint colorLoc, glm::mat4 projectio
     }
     glUseProgram(shaderProgram);
     */
+
     Collision = CollisionDetection(objects);
 
     if (!paused && !Collision) {
