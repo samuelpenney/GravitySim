@@ -10,7 +10,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <random>
 #include <ft2build.h>
-#include FT_FREETYPE_H
+//#include FT_FREETYPE_H
 
 
 float SW = 1600.0f;
@@ -332,6 +332,8 @@ public:
         glMatrixMode(GL_MODELVIEW);
     }
 
+    //void drawObjectLabel()
+
     void updatePositionHistory() {
         std::vector<double> currentPos = {position[0], position[1], position[2]};
         positionHistory.push_back(currentPos);
@@ -380,30 +382,31 @@ int main() {
     
     Object Planet1;
     Planet1.name = "Planet1";
-    Planet1.radius = 1.0;
-    Planet1.mass = 1e6;
-    Planet1.position = {550.0f, 0.0f, 530.0f};
-    Planet1.velocity = {-4.7f, 0.0f, 0.0f};
+    Planet1.radius = 5.0;
+    Planet1.mass = 5e7;
+    Planet1.position = {500.0f, 0.0f, 500.0f};
+    Planet1.velocity = {0.0f, 0.0f, 0.0f};
 
     Object Planet2;
     Planet2.name = "Planet2";
-    Planet2.radius = 2.0;
-    Planet2.mass = 5e6;
-    Planet2.position = {525.0f, 0.0f, 500.0f};
-    Planet2.velocity = {-2.0f, 0.0f, 0.0f};
+    Planet2.radius = 0.8;
+    Planet2.mass = 1e5;
+    Planet2.position = {520.0f, 0.0f, 500.0f};
+    Planet2.velocity = {0.0f, 0.0f, 5.8f};
 
     Object Planet3;
     Planet3.name = "Planet3";
-    Planet3.radius = 3.0;
-    Planet3.mass = 1e7;
-    Planet3.position = {450.0f, 0.0f, 450.0f};
-    Planet3.velocity = {0.5f, 0.0f, 0.0f};
+    Planet3.radius = 1.0;
+    Planet3.mass = 2e5;
+    Planet3.position = {535.0f, 0.0f, 500.0f};
+    Planet3.velocity = {0.0f, 0.0f, 4.4f};
 
     Object Planet4;
     Planet4.name = "Planet4";
-    Planet4.radius = 4.0;
-    Planet4.mass = 2e7;
-    Planet4.position = {370.0f, 0.0f, 370.0f};
+    Planet4.radius = 1.2;
+    Planet4.mass = 3e5;
+    Planet4.position = {555.0f, 0.0f, 500.0f};
+    Planet4.velocity = {0.0f, 0.0f, 3.5f};
 
     double prevTime = glfwGetTime();
 
